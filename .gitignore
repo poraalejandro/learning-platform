@@ -1,0 +1,10 @@
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Secrets — never committed, in this repo or any subfolder
+.env
+.env.*
+!.env.example
