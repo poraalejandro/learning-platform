@@ -5,7 +5,10 @@ import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
 import { runTests, type TestResult } from "@/lib/pyodide";
 import { recordAttempt, recomputeNodeStatus } from "@/lib/progress";
+import { requestHint, TutorError } from "@/lib/tutor";
 import type { CodeContent } from "@/lib/exercises";
+
+const MAX_HINT_LEVEL = 3;
 
 export function CodeExercise({
   exerciseId,
@@ -19,9 +22,13 @@ export function CodeExercise({
   const [code, setCode] = useState(content.starter_code);
   const [results, setResults] = useState<TestResult[] | null>(null);
   const [running, setRunning] = useState(false);
-  const [revealedHints, setRevealedHints] = useState(0);
+  const [hints, setHints] = useState<{ text: string; isFallback: boolean }[]>([]);
+  const [hintLoading, setHintLoading] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const [passed, setPassed] = useState(false);
+
+  const hintLevel = hints.length;
+  const maxLevel = Math.min(MAX_HINT_LEVEL, content.hints.length);
 
   async function handleRun() {
     setRunning(true);
@@ -36,7 +43,7 @@ export function CodeExercise({
         exerciseId,
         status: allPassed ? "passed" : "failed",
         submittedCode: code,
-        hintsUsed: revealedHints,
+        hintsUsed: hintLevel,
       });
       if (allPassed) await recomputeNodeStatus(nodeId);
     } finally {
@@ -44,9 +51,31 @@ export function CodeExercise({
     }
   }
 
+  async function handleRequestHint() {
+    setHintLoading(true);
+    const nextLevel = hintLevel + 1;
+    try {
+      const hint = await requestHint(exerciseId, code, nextLevel);
+      setHints((prev) => [...prev, { text: hint, isFallback: false }]);
+    } catch (error) {
+      // The tutor is the only piece of the app with a real per-request cost
+      // and a live external dependency (Groq) — if it's down or the user
+      // hit their rate limit, fall back to the pre-written hint at this
+      // level instead of leaving the student stuck with nothing.
+      const fallback = content.hints[nextLevel - 1];
+      const note =
+        error instanceof TutorError && error.status === 429
+          ? " (límite de pistas alcanzado por ahora — esta es una pista estática de reserva)"
+          : " (el tutor no está disponible ahora mismo — pista estática de reserva)";
+      setHints((prev) => [...prev, { text: (fallback ?? "") + note, isFallback: true }]);
+    } finally {
+      setHintLoading(false);
+    }
+  }
+
   async function handleRevealSolution() {
     setShowSolution(true);
-    await recordAttempt({ exerciseId, status: "revealed", submittedCode: code, hintsUsed: revealedHints });
+    await recordAttempt({ exerciseId, status: "revealed", submittedCode: code, hintsUsed: hintLevel });
   }
 
   return (
@@ -68,12 +97,13 @@ export function CodeExercise({
         >
           {running ? "Ejecutando..." : "▶ Ejecutar"}
         </button>
-        {revealedHints < content.hints.length && (
+        {hintLevel < maxLevel && (
           <button
-            onClick={() => setRevealedHints((n) => n + 1)}
-            className="rounded border px-3 py-2 text-sm"
+            onClick={handleRequestHint}
+            disabled={hintLoading}
+            className="rounded border px-3 py-2 text-sm disabled:opacity-50"
           >
-            💡 Pista ({revealedHints}/{content.hints.length})
+            {hintLoading ? "Pensando..." : `💡 Pista (${hintLevel}/${maxLevel})`}
           </button>
         )}
         {!showSolution && (
@@ -83,10 +113,10 @@ export function CodeExercise({
         )}
       </div>
 
-      {revealedHints > 0 && (
+      {hints.length > 0 && (
         <ul className="flex flex-col gap-1 rounded border border-amber-200 bg-amber-50 p-3 text-sm dark:border-amber-800 dark:bg-amber-950">
-          {content.hints.slice(0, revealedHints).map((hint, i) => (
-            <li key={i}>💡 {hint}</li>
+          {hints.map((hint, i) => (
+            <li key={i}>💡 {hint.text}</li>
           ))}
         </ul>
       )}
