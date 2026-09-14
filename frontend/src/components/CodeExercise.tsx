@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
 import { runTests, type TestResult } from "@/lib/pyodide";
@@ -26,9 +26,23 @@ export function CodeExercise({
   const [hintLoading, setHintLoading] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const [passed, setPassed] = useState(false);
+  const [editorTheme, setEditorTheme] = useState<"light" | "dark">("light");
 
   const hintLevel = hints.length;
   const maxLevel = Math.min(MAX_HINT_LEVEL, content.hints.length);
+
+  // CodeMirror needs an explicit theme: left unset, its default light theme's
+  // dark text ends up on this page's dark-mode background (inherited, not
+  // set by CodeMirror itself) — dark-on-dark, unreadable. Matching it to the
+  // OS/browser's actual color scheme (the same signal globals.css uses) is
+  // what fixes that instead of guessing a single fixed theme.
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    setEditorTheme(mediaQuery.matches ? "dark" : "light");
+    const handleChange = (e: MediaQueryListEvent) => setEditorTheme(e.matches ? "dark" : "light");
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
 
   async function handleRun() {
     setRunning(true);
@@ -85,6 +99,7 @@ export function CodeExercise({
       <CodeMirror
         value={code}
         height="220px"
+        theme={editorTheme}
         extensions={[python()]}
         onChange={(value) => setCode(value)}
       />
