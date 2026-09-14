@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
 import { runTests, type TestResult } from "@/lib/pyodide";
@@ -9,6 +9,20 @@ import { requestHint, TutorError } from "@/lib/tutor";
 import type { CodeContent } from "@/lib/exercises";
 
 const MAX_HINT_LEVEL = 3;
+
+function subscribeToColorScheme(callback: () => void) {
+  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  mediaQuery.addEventListener("change", callback);
+  return () => mediaQuery.removeEventListener("change", callback);
+}
+
+function getColorScheme(): "light" | "dark" {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function getServerColorScheme(): "light" | "dark" {
+  return "light";
+}
 
 export function CodeExercise({
   exerciseId,
@@ -26,23 +40,18 @@ export function CodeExercise({
   const [hintLoading, setHintLoading] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const [passed, setPassed] = useState(false);
-  const [editorTheme, setEditorTheme] = useState<"light" | "dark">("light");
 
   const hintLevel = hints.length;
   const maxLevel = Math.min(MAX_HINT_LEVEL, content.hints.length);
 
   // CodeMirror needs an explicit theme: left unset, its default light theme's
   // dark text ends up on this page's dark-mode background (inherited, not
-  // set by CodeMirror itself) — dark-on-dark, unreadable. Matching it to the
-  // OS/browser's actual color scheme (the same signal globals.css uses) is
-  // what fixes that instead of guessing a single fixed theme.
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    setEditorTheme(mediaQuery.matches ? "dark" : "light");
-    const handleChange = (e: MediaQueryListEvent) => setEditorTheme(e.matches ? "dark" : "light");
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
-  }, []);
+  // set by CodeMirror itself) — dark-on-dark, unreadable. useSyncExternalStore
+  // (not useEffect+useState) is the correct tool for reading a live external
+  // value like this: it reads synchronously during render, so there's no
+  // extra render-then-correct flash, and getServerColorScheme keeps the
+  // server-rendered pass (no `window`) from crashing.
+  const editorTheme = useSyncExternalStore(subscribeToColorScheme, getColorScheme, getServerColorScheme);
 
   async function handleRun() {
     setRunning(true);
