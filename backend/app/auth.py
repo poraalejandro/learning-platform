@@ -27,7 +27,12 @@ def verify_jwt(authorization: str = Header(...)) -> str:
 
     try:
         signing_key = _jwk_client.get_signing_key_from_jwt(token)
-        payload = jwt.decode(token, signing_key.key, algorithms=["ES256"])
+        # PyJWT defaults verify_aud to True regardless of whether `audience`
+        # is passed, and raises "Invalid audience" if the token has an `aud`
+        # claim but none was given to check against — Supabase access
+        # tokens always carry aud: "authenticated", so that has to be passed
+        # explicitly or every otherwise-valid token gets rejected.
+        payload = jwt.decode(token, signing_key.key, algorithms=["ES256"], audience="authenticated")
     except jwt.PyJWTError as error:
         raise HTTPException(status_code=401, detail=f"Invalid token: {error}")
 
