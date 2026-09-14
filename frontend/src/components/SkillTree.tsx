@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { NodeStatus, SkillNode } from "@/lib/skillTree";
 
 const STATUS_STYLES: Record<NodeStatus, string> = {
@@ -22,8 +23,8 @@ const STATUS_ICON: Record<NodeStatus, string> = {
 };
 
 function NodeCard({ node, status, unlockHint }: { node: SkillNode; status: NodeStatus; unlockHint?: string }) {
-  return (
-    <div className={`rounded-lg border px-4 py-3 ${STATUS_STYLES[status]}`}>
+  const body = (
+    <>
       <div className="flex items-center justify-between gap-2">
         <span className="font-medium">{node.title}</span>
         <span className="text-xs whitespace-nowrap">{STATUS_ICON[status]} {STATUS_LABEL[status]}</span>
@@ -31,7 +32,20 @@ function NodeCard({ node, status, unlockHint }: { node: SkillNode; status: NodeS
       {status === "locked" && unlockHint && (
         <p className="mt-1 text-xs opacity-80">Requiere: {unlockHint}</p>
       )}
-    </div>
+    </>
+  );
+
+  if (status === "locked") {
+    return <div className={`rounded-lg border px-4 py-3 ${STATUS_STYLES[status]}`}>{body}</div>;
+  }
+
+  return (
+    <Link
+      href={`/node/${node.id}`}
+      className={`rounded-lg border px-4 py-3 transition hover:brightness-95 ${STATUS_STYLES[status]}`}
+    >
+      {body}
+    </Link>
   );
 }
 
