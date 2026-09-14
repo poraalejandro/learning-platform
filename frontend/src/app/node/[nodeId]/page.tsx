@@ -4,12 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { computeNodeStatuses, type SkillNode } from "@/lib/skillTree";
 import type { Exercise } from "@/lib/exercises";
 
-const TYPE_LABEL: Record<string, string> = {
-  code: "Código",
-  flashcard: "Flashcard",
-  recall: "Recall",
-};
-
 export default async function NodePage({ params }: { params: Promise<{ nodeId: string }> }) {
   const { nodeId } = await params;
   const supabase = await createClient();
@@ -39,23 +33,26 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
   if (statuses.get(nodeId) === "locked") redirect("/");
 
   const typedExercises = (exercises ?? []) as Exercise[];
-  const exerciseIds = typedExercises.map((e) => e.id);
+  const codeExercises = typedExercises.filter((e) => e.type === "code");
+  const reviewExercises = typedExercises.filter((e) => e.type === "flashcard" || e.type === "recall");
+  const reviewExerciseIds = reviewExercises.map((e) => e.id);
+  const codeExerciseIds = codeExercises.map((e) => e.id);
 
   const [{ data: passedAttempts }, { data: srsCards }] = await Promise.all([
-    exerciseIds.length
+    codeExerciseIds.length
       ? supabase
           .from("exercise_attempts")
           .select("exercise_id")
           .eq("user_id", user.id)
           .eq("status", "passed")
-          .in("exercise_id", exerciseIds)
+          .in("exercise_id", codeExerciseIds)
       : Promise.resolve({ data: [] }),
-    exerciseIds.length
+    reviewExerciseIds.length
       ? supabase
           .from("srs_cards")
           .select("exercise_id, reps, due_date")
           .eq("user_id", user.id)
-          .in("exercise_id", exerciseIds)
+          .in("exercise_id", reviewExerciseIds)
       : Promise.resolve({ data: [] }),
   ]);
 
@@ -63,14 +60,10 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
   const cardsByExercise = new Map((srsCards ?? []).map((c) => [c.exercise_id, c]));
   const today = new Date().toISOString().slice(0, 10);
 
-  function exerciseBadge(exercise: Exercise) {
-    if (exercise.type === "code") {
-      return passedIds.has(exercise.id) ? "✅ Hecho" : "⬜ Pendiente";
-    }
-    const card = cardsByExercise.get(exercise.id);
-    if (!card || card.reps === 0) return "⬜ Nueva";
-    return card.due_date <= today ? "🔁 Repasar hoy" : "✅ Al día";
-  }
+  const dueCount = reviewExercises.filter((e) => {
+    const card = cardsByExercise.get(e.id);
+    return !card || card.due_date <= today;
+  }).length;
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6 py-10">
@@ -82,24 +75,33 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
         {node.description && <p className="text-zinc-500">{node.description}</p>}
       </div>
 
-      <ul className="flex flex-col gap-2">
-        {typedExercises.map((exercise) => (
-          <li key={exercise.id}>
-            <Link
-              href={`/node/${nodeId}/exercise/${exercise.id}`}
-              className="flex items-center justify-between rounded-lg border px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-900"
-            >
-              <span>
-                <span className="mr-2 rounded bg-zinc-100 px-2 py-0.5 text-xs dark:bg-zinc-800">
-                  {TYPE_LABEL[exercise.type] ?? exercise.type}
-                </span>
-                Ejercicio {exercise.position}
-              </span>
-              <span className="text-sm">{exerciseBadge(exercise)}</span>
-            </Link>
-          </li>
+      <div className="flex flex-col gap-2">
+        {reviewExercises.length > 0 && (
+          <Link
+            href={`/node/${nodeId}/review`}
+            className="flex items-center justify-between rounded-lg border border-blue-300 bg-blue-50 px-4 py-3 hover:brightness-95 dark:border-blue-700 dark:bg-blue-950"
+          >
+            <span className="font-medium">📚 Flashcards y recall</span>
+            <span className="text-sm">
+              {dueCount > 0 ? `🔁 ${dueCount} pendiente${dueCount === 1 ? "" : "s"}` : "✅ Al día"}
+            </span>
+          </Link>
+        )}
+
+        {codeExercises.map((exercise) => (
+          <Link
+            key={exercise.id}
+            href={`/node/${nodeId}/exercise/${exercise.id}`}
+            className="flex items-center justify-between rounded-lg border px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+          >
+            <span>
+              <span className="mr-2 rounded bg-zinc-100 px-2 py-0.5 text-xs dark:bg-zinc-800">Código</span>
+              Ejercicio {exercise.position}
+            </span>
+            <span className="text-sm">{passedIds.has(exercise.id) ? "✅ Hecho" : "⬜ Pendiente"}</span>
+          </Link>
         ))}
-      </ul>
+      </div>
 
       {typedExercises.length === 0 && (
         <p className="text-zinc-500">Todavía no hay ejercicios para este nodo.</p>

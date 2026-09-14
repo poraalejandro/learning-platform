@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import type { CodeContent, Exercise, FlashcardContent, RecallContent } from "@/lib/exercises";
+import type { CodeContent, Exercise } from "@/lib/exercises";
 import { CodeExercise } from "@/components/CodeExercise";
-import { FlashcardExercise } from "@/components/FlashcardExercise";
 
 export default async function ExercisePage({
   params,
@@ -27,6 +26,14 @@ export default async function ExercisePage({
   if (!exercise) notFound();
   const typedExercise = exercise as Exercise;
 
+  // flashcard/recall are always worked through the review queue now (it
+  // auto-advances to the next due card instead of bouncing back to this
+  // node's list after every single one) — a direct link to one just enters
+  // that same queue rather than showing a dead-end single-card view.
+  if (typedExercise.type === "flashcard" || typedExercise.type === "recall") {
+    redirect(`/node/${nodeId}/review`);
+  }
+
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6 py-10">
       <Link href={`/node/${nodeId}`} className="text-sm underline">
@@ -35,20 +42,6 @@ export default async function ExercisePage({
 
       {typedExercise.type === "code" && (
         <CodeExercise exerciseId={exerciseId} nodeId={nodeId} content={typedExercise.content as CodeContent} />
-      )}
-      {typedExercise.type === "flashcard" && (
-        <FlashcardExercise
-          exerciseId={exerciseId}
-          kind="flashcard"
-          content={typedExercise.content as FlashcardContent}
-        />
-      )}
-      {typedExercise.type === "recall" && (
-        <FlashcardExercise
-          exerciseId={exerciseId}
-          kind="recall"
-          content={typedExercise.content as RecallContent}
-        />
       )}
       {!["code", "flashcard", "recall"].includes(typedExercise.type) && (
         <p className="text-zinc-500">
