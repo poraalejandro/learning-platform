@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { NodeStatus, SkillNode } from "@/lib/skillTree";
+import { SkillTreeGraph } from "@/components/SkillTreeGraph";
 
 const STATUS_STYLES: Record<NodeStatus, string> = {
   locked: "border-zinc-200 bg-zinc-50 text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-600",
@@ -49,41 +50,62 @@ function NodeCard({ node, status, unlockHint }: { node: SkillNode; status: NodeS
   );
 }
 
+/**
+ * The winding-path graph (SkillTreeGraph) needs real horizontal room for
+ * its zigzag + side branches, so it only renders md: and up. Below that,
+ * this simple two-column list — already proven not to break at phone
+ * width — is what shows instead, rather than betting the whole tree on
+ * pixel math I can't check in a real browser from here.
+ */
 export function SkillTree({
   mainNodes,
   sideNodes,
   statuses,
   sideUnlockTitles,
+  sideParentId,
 }: {
   mainNodes: SkillNode[];
   sideNodes: SkillNode[];
   statuses: Map<string, NodeStatus>;
   sideUnlockTitles: Map<string, string>;
+  sideParentId: Map<string, string>;
 }) {
   return (
-    <div className="grid w-full max-w-3xl grid-cols-1 gap-8 sm:grid-cols-2">
-      <section className="flex flex-col gap-2">
-        <h2 className="mb-1 text-sm font-semibold tracking-wide text-zinc-500 uppercase">
-          Main quest
-        </h2>
-        {mainNodes.map((node) => (
-          <NodeCard key={node.id} node={node} status={statuses.get(node.id) ?? "locked"} />
-        ))}
-      </section>
+    <>
+      <div className="grid w-full max-w-3xl grid-cols-1 gap-8 md:hidden">
+        <section className="flex flex-col gap-2">
+          <h2 className="mb-1 text-sm font-semibold tracking-wide text-zinc-500 uppercase">
+            Main quest
+          </h2>
+          {mainNodes.map((node) => (
+            <NodeCard key={node.id} node={node} status={statuses.get(node.id) ?? "locked"} />
+          ))}
+        </section>
 
-      <section className="flex flex-col gap-2">
-        <h2 className="mb-1 text-sm font-semibold tracking-wide text-zinc-500 uppercase">
-          Side quests
-        </h2>
-        {sideNodes.map((node) => (
-          <NodeCard
-            key={node.id}
-            node={node}
-            status={statuses.get(node.id) ?? "locked"}
-            unlockHint={sideUnlockTitles.get(node.id)}
-          />
-        ))}
-      </section>
-    </div>
+        <section className="flex flex-col gap-2">
+          <h2 className="mb-1 text-sm font-semibold tracking-wide text-zinc-500 uppercase">
+            Side quests
+          </h2>
+          {sideNodes.map((node) => (
+            <NodeCard
+              key={node.id}
+              node={node}
+              status={statuses.get(node.id) ?? "locked"}
+              unlockHint={sideUnlockTitles.get(node.id)}
+            />
+          ))}
+        </section>
+      </div>
+
+      <div className="hidden w-full max-w-4xl md:block">
+        <SkillTreeGraph
+          mainNodes={mainNodes}
+          sideNodes={sideNodes}
+          statuses={statuses}
+          sideUnlockTitles={sideUnlockTitles}
+          sideParentId={sideParentId}
+        />
+      </div>
+    </>
   );
 }

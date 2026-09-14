@@ -36,10 +36,12 @@ export default async function Home() {
   const statuses = computeNodeStatuses(allNodes, prerequisites ?? [], progress ?? []);
 
   const sideUnlockTitles = new Map<string, string>();
+  const sideParentId = new Map<string, string>();
   for (const { node_id, requires_node_id } of prerequisites ?? []) {
     const sideNode = nodesById.get(node_id);
     if (sideNode?.track === "side") {
       sideUnlockTitles.set(node_id, nodesById.get(requires_node_id)?.title ?? requires_node_id);
+      sideParentId.set(node_id, requires_node_id);
     }
   }
 
@@ -64,6 +66,7 @@ export default async function Home() {
         sideNodes={sideNodes}
         statuses={statuses}
         sideUnlockTitles={sideUnlockTitles}
+        sideParentId={sideParentId}
       />
     </main>
   );
