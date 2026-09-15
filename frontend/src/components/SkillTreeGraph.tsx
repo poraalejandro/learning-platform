@@ -3,10 +3,8 @@ import type { NodeStatus, SkillNode } from "@/lib/skillTree";
 
 const STATUS_STYLES: Record<NodeStatus, string> = {
   locked: "border-zinc-200 bg-zinc-50 text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-600",
-  available:
-    "border-blue-300 bg-blue-50 text-blue-900 shadow-sm shadow-blue-200/60 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-100",
-  in_progress:
-    "border-amber-300 bg-amber-50 text-amber-900 shadow-sm shadow-amber-200/60 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100",
+  available: "border-primary/40 bg-primary-light text-primary shadow-sm dark:text-white",
+  in_progress: "border-accent/50 bg-accent-light text-accent shadow-sm dark:text-white",
   completed:
     "border-green-300 bg-green-50 text-green-900 shadow-sm shadow-green-200/60 dark:border-green-700 dark:bg-green-950 dark:text-green-100",
 };
@@ -50,33 +48,33 @@ function GraphNode({
     </>
   );
 
-  const style = {
-    left: `${position.x}%`,
-    top: `${position.y}px`,
-    width,
-    transform: "translate(-50%, -50%)",
-  };
+  // Positioning (left/top + centering translate) lives on this outer,
+  // non-animated wrapper. The hover/active transform lives on the inner
+  // element instead of also living here, because inline `style.transform`
+  // (needed for the percentage-based x) would otherwise fight with
+  // Tailwind's hover:scale/active:scale utilities, which compose onto the
+  // same `transform` property — same node, two independent transforms.
+  const wrapperStyle = { left: `${position.x}%`, top: `${position.y}px`, width };
 
   if (status === "locked") {
     return (
-      <div
-        title={title}
-        style={style}
-        className={`absolute rounded-xl border px-3 py-2 ${STATUS_STYLES[status]}`}
-      >
-        {body}
+      <div style={wrapperStyle} className="absolute -translate-x-1/2 -translate-y-1/2">
+        <div title={title} className={`rounded-xl border px-3 py-2 ${STATUS_STYLES[status]}`}>
+          {body}
+        </div>
       </div>
     );
   }
 
   return (
-    <Link
-      href={`/node/${position.node.id}`}
-      style={style}
-      className={`absolute rounded-xl border px-3 py-2 transition hover:scale-105 hover:brightness-95 ${STATUS_STYLES[status]}`}
-    >
-      {body}
-    </Link>
+    <div style={wrapperStyle} className="absolute -translate-x-1/2 -translate-y-1/2">
+      <Link
+        href={`/node/${position.node.id}`}
+        className={`block rounded-xl border px-3 py-2 transition-all duration-200 ease-out hover:-translate-y-1 hover:scale-105 hover:shadow-lg active:scale-95 active:duration-75 ${STATUS_STYLES[status]}`}
+      >
+        {body}
+      </Link>
+    </div>
   );
 }
 
@@ -124,33 +122,40 @@ export function SkillTreeGraph({
               y1={from.y}
               x2={to.x}
               y2={to.y}
+              pathLength={1}
               strokeWidth={2}
-              className={walked ? "stroke-green-400 dark:stroke-green-700" : "stroke-zinc-200 dark:stroke-zinc-800"}
-              strokeDasharray={walked ? undefined : "4 4"}
+              className={
+                walked
+                  ? "animate-draw-line stroke-green-400 dark:stroke-green-700"
+                  : "stroke-zinc-200 dark:stroke-zinc-800"
+              }
+              strokeDasharray={walked ? undefined : "0.03 0.03"}
               vectorEffect="non-scaling-stroke"
             />
           );
         })}
-        {sidePositions.map(
-          ({ node, x, y, parent }) =>
-            parent && (
-              <line
-                key={`side-${node.id}`}
-                x1={parent.x}
-                y1={parent.y}
-                x2={x}
-                y2={y}
-                strokeWidth={2}
-                className={
-                  statuses.get(parent.node.id) === "completed"
-                    ? "stroke-green-400 dark:stroke-green-700"
-                    : "stroke-zinc-200 dark:stroke-zinc-800"
-                }
-                strokeDasharray={statuses.get(parent.node.id) === "completed" ? undefined : "4 4"}
-                vectorEffect="non-scaling-stroke"
-              />
-            ),
-        )}
+        {sidePositions.map(({ node, x, y, parent }) => {
+          if (!parent) return null;
+          const walked = statuses.get(parent.node.id) === "completed";
+          return (
+            <line
+              key={`side-${node.id}`}
+              x1={parent.x}
+              y1={parent.y}
+              x2={x}
+              y2={y}
+              pathLength={1}
+              strokeWidth={2}
+              className={
+                walked
+                  ? "animate-draw-line stroke-green-400 dark:stroke-green-700"
+                  : "stroke-zinc-200 dark:stroke-zinc-800"
+              }
+              strokeDasharray={walked ? undefined : "0.03 0.03"}
+              vectorEffect="non-scaling-stroke"
+            />
+          );
+        })}
       </svg>
 
       {mainPositions.map((position) => (

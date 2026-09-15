@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { recordAttempt, recomputeNodeStatus } from "@/lib/progress";
 import { flagIfStruggling, maybeAdvanceOnRetry } from "@/lib/mistakes";
+import { celebrate } from "@/lib/confetti";
 import type { ParsonsContent } from "@/lib/exercises";
 
 function shuffle<T>(items: T[]): T[] {
@@ -44,6 +45,7 @@ export function ParsonsExercise({
     setChecked(isCorrect);
     await recordAttempt({ exerciseId, status: isCorrect ? "passed" : "failed" });
     if (isCorrect) {
+      celebrate();
       await recomputeNodeStatus(nodeId);
       await maybeAdvanceOnRetry(exerciseId);
     } else {
@@ -66,14 +68,14 @@ export function ParsonsExercise({
         {lines.map((line, i) => (
           <li
             key={`${i}-${line}`}
-            className="flex items-center gap-3 rounded border bg-zinc-50 px-3 py-2 dark:bg-zinc-900"
+            className="flex items-center gap-3 rounded border bg-zinc-50 px-3 py-2 transition-colors dark:bg-zinc-900"
           >
             <div className="flex flex-col gap-0.5 text-xs">
               <button
                 onClick={() => move(i, -1)}
                 disabled={i === 0}
                 aria-label="Subir línea"
-                className="disabled:opacity-20"
+                className="transition-transform active:scale-90 disabled:opacity-20"
               >
                 ▲
               </button>
@@ -81,7 +83,7 @@ export function ParsonsExercise({
                 onClick={() => move(i, 1)}
                 disabled={i === lines.length - 1}
                 aria-label="Bajar línea"
-                className="disabled:opacity-20"
+                className="transition-transform active:scale-90 disabled:opacity-20"
               >
                 ▼
               </button>
@@ -92,18 +94,26 @@ export function ParsonsExercise({
       </ol>
 
       <div className="flex flex-wrap gap-2">
-        <button onClick={handleCheck} className="rounded bg-black px-3 py-2 text-sm text-white">
+        <button
+          onClick={handleCheck}
+          className="rounded bg-primary px-3 py-2 text-sm text-white transition-all duration-150 hover:brightness-110 active:scale-95"
+        >
           Comprobar orden
         </button>
         {!showSolution && (
-          <button onClick={handleRevealSolution} className="rounded border px-3 py-2 text-sm">
+          <button
+            onClick={handleRevealSolution}
+            className="rounded border px-3 py-2 text-sm transition-all duration-150 hover:bg-zinc-50 active:scale-95 dark:hover:bg-zinc-900"
+          >
             🏳 Ver solución
           </button>
         )}
       </div>
 
       {checked !== null && (
-        <p className={checked ? "font-medium text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400"}>
+        <p
+          className={`animate-pop-in ${checked ? "font-medium text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400"}`}
+        >
           {checked ? "✅ ¡Orden correcto! Progreso guardado." : "❌ Todavía no es el orden correcto."}
         </p>
       )}

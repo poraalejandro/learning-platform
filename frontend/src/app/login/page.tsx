@@ -70,7 +70,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={pending}
-          className="rounded bg-black px-3 py-2 text-white disabled:opacity-50"
+          className="rounded bg-primary px-3 py-2 text-white transition-all duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
         >
           {mode === "sign-in" ? "Sign in" : "Sign up"}
         </button>
@@ -83,7 +83,7 @@ export default function LoginPage() {
           setMode(mode === "sign-in" ? "sign-up" : "sign-in");
           setMessage(null);
         }}
-        className="text-sm underline"
+        className="text-sm text-primary underline transition-opacity hover:opacity-75"
       >
         {mode === "sign-in" ? "Need an account? Sign up" : "Have an account? Sign in"}
       </button>

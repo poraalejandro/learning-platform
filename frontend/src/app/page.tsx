@@ -15,7 +15,10 @@ export default async function Home() {
       <main className="flex min-h-screen flex-col items-center justify-center gap-3 p-6">
         <h1 className="text-2xl font-semibold">learning-platform</h1>
         <p>Not signed in.</p>
-        <Link href="/login" className="rounded bg-black px-3 py-2 text-white">
+        <Link
+          href="/login"
+          className="rounded bg-primary px-3 py-2 text-white transition-all duration-150 hover:brightness-110 active:scale-95"
+        >
           Sign in
         </Link>
       </main>
@@ -55,7 +58,10 @@ export default async function Home() {
           </p>
         </div>
         <form action={signOut}>
-          <button type="submit" className="rounded border px-3 py-2 text-sm underline">
+          <button
+            type="submit"
+            className="rounded border px-3 py-2 text-sm underline transition-colors duration-150 hover:bg-zinc-50 active:scale-95 dark:hover:bg-zinc-900"
+          >
             Sign out
           </button>
         </form>

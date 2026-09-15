@@ -7,6 +7,7 @@ import { runTests, type TestResult } from "@/lib/pyodide";
 import { recordAttempt, recomputeNodeStatus } from "@/lib/progress";
 import { flagIfStruggling, maybeAdvanceOnRetry } from "@/lib/mistakes";
 import { requestHint, TutorError } from "@/lib/tutor";
+import { celebrate } from "@/lib/confetti";
 import type { CodeContent } from "@/lib/exercises";
 
 const MAX_HINT_LEVEL = 3;
@@ -70,6 +71,7 @@ export function CodeExercise({
         hintsUsed: hintLevel,
       });
       if (allPassed) {
+        celebrate();
         await recomputeNodeStatus(nodeId);
         await maybeAdvanceOnRetry(exerciseId);
       } else {
@@ -124,7 +126,7 @@ export function CodeExercise({
         <button
           onClick={handleRun}
           disabled={running}
-          className="rounded bg-black px-3 py-2 text-sm text-white disabled:opacity-50"
+          className="rounded bg-primary px-3 py-2 text-sm text-white transition-all duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
         >
           {running ? "Ejecutando..." : "▶ Ejecutar"}
         </button>
@@ -132,22 +134,27 @@ export function CodeExercise({
           <button
             onClick={handleRequestHint}
             disabled={hintLoading}
-            className="rounded border px-3 py-2 text-sm disabled:opacity-50"
+            className="rounded border px-3 py-2 text-sm transition-all duration-150 hover:bg-zinc-50 active:scale-95 disabled:opacity-50 dark:hover:bg-zinc-900"
           >
             {hintLoading ? "Pensando..." : `💡 Pista (${hintLevel}/${maxLevel})`}
           </button>
         )}
         {!showSolution && (
-          <button onClick={handleRevealSolution} className="rounded border px-3 py-2 text-sm">
+          <button
+            onClick={handleRevealSolution}
+            className="rounded border px-3 py-2 text-sm transition-all duration-150 hover:bg-zinc-50 active:scale-95 dark:hover:bg-zinc-900"
+          >
             🏳 Ver solución
           </button>
         )}
       </div>
 
       {hints.length > 0 && (
-        <ul className="flex flex-col gap-1 rounded border border-amber-200 bg-amber-50 p-3 text-sm dark:border-amber-800 dark:bg-amber-950">
+        <ul className="flex flex-col gap-1 rounded border border-accent/40 bg-accent-light p-3 text-sm">
           {hints.map((hint, i) => (
-            <li key={i}>💡 {hint.text}</li>
+            <li key={i} className="animate-pop-in">
+              💡 {hint.text}
+            </li>
           ))}
         </ul>
       )}
@@ -167,8 +174,8 @@ export function CodeExercise({
       )}
 
       {passed && (
-        <p className="font-medium text-green-700 dark:text-green-400">
-          ¡Correcto! Progreso guardado.
+        <p className="animate-pop-in font-medium text-green-700 dark:text-green-400">
+          ✅ ¡Correcto! Progreso guardado.
         </p>
       )}
 

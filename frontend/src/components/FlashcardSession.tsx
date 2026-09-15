@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FlashcardCard } from "@/components/FlashcardCard";
+import { celebrate } from "@/lib/confetti";
 import type { Exercise } from "@/lib/exercises";
 import type { SrsCard } from "@/lib/sm2";
 
@@ -14,13 +15,20 @@ export function FlashcardSession({
   items: { exercise: Exercise; card: SrsCard }[];
 }) {
   const [index, setIndex] = useState(0);
+  const done = index >= items.length;
 
-  if (index >= items.length) {
+  useEffect(() => {
+    if (done) celebrate();
+  }, [done]);
+
+  if (done) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-2xl border py-16 text-center">
+      <div className="animate-pop-in flex flex-col items-center gap-3 rounded-2xl border py-16 text-center">
         <p className="text-4xl">✅</p>
-        <p className="font-medium">Sesión completada — {items.length} tarjeta{items.length === 1 ? "" : "s"} repasadas.</p>
-        <Link href={`/node/${nodeId}`} className="text-sm underline">
+        <p className="font-medium">
+          Sesión completada — {items.length} tarjeta{items.length === 1 ? "" : "s"} repasadas.
+        </p>
+        <Link href={`/node/${nodeId}`} className="text-sm text-primary underline">
           Volver a los ejercicios
         </Link>
       </div>
@@ -40,7 +48,7 @@ export function FlashcardSession({
         </div>
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
           <div
-            className="h-full rounded-full bg-blue-600 transition-all duration-300"
+            className="h-full rounded-full bg-primary transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>

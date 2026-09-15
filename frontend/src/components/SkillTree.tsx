@@ -4,8 +4,8 @@ import { SkillTreeGraph } from "@/components/SkillTreeGraph";
 
 const STATUS_STYLES: Record<NodeStatus, string> = {
   locked: "border-zinc-200 bg-zinc-50 text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-600",
-  available: "border-blue-300 bg-blue-50 text-blue-900 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-100",
-  in_progress: "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100",
+  available: "border-primary/40 bg-primary-light text-primary dark:text-white",
+  in_progress: "border-accent/50 bg-accent-light text-accent dark:text-white",
   completed: "border-green-300 bg-green-50 text-green-900 dark:border-green-700 dark:bg-green-950 dark:text-green-100",
 };
 
@@ -43,7 +43,7 @@ function NodeCard({ node, status, unlockHint }: { node: SkillNode; status: NodeS
   return (
     <Link
       href={`/node/${node.id}`}
-      className={`rounded-lg border px-4 py-3 transition hover:brightness-95 ${STATUS_STYLES[status]}`}
+      className={`rounded-lg border px-4 py-3 transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] active:duration-75 ${STATUS_STYLES[status]}`}
     >
       {body}
     </Link>

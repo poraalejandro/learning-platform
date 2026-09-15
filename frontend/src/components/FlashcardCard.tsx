@@ -9,7 +9,7 @@ const RATING_BUTTONS: { rating: Rating; label: string; classes: string }[] = [
   { rating: "again", label: "Otra vez", classes: "bg-red-600 hover:bg-red-700" },
   { rating: "hard", label: "Difícil", classes: "bg-orange-500 hover:bg-orange-600" },
   { rating: "good", label: "Bien", classes: "bg-green-600 hover:bg-green-700" },
-  { rating: "easy", label: "Fácil", classes: "bg-blue-600 hover:bg-blue-700" },
+  { rating: "easy", label: "Fácil", classes: "bg-primary hover:brightness-110" },
 ];
 
 const TYPE_LABEL: Record<string, string> = { flashcard: "Flashcard", recall: "Recall" };
@@ -53,7 +53,7 @@ export function FlashcardCard({
           }`}
         >
           <div className="overflow-hidden">
-            <div className="rounded-xl border-t-2 border-blue-200 bg-blue-50/60 p-5 dark:border-blue-900 dark:bg-blue-950/40">
+            <div className="animate-pop-in rounded-xl border-t-2 border-primary/30 bg-primary-light/60 p-5">
               <pre className="text-center font-sans text-base whitespace-pre-wrap">{answerText}</pre>
               {explanation && (
                 <p className="mt-3 text-center text-sm text-zinc-500">{explanation}</p>
@@ -67,7 +67,7 @@ export function FlashcardCard({
         {!revealed ? (
           <button
             onClick={() => setRevealed(true)}
-            className="w-full rounded-xl bg-black py-3 font-medium text-white dark:bg-white dark:text-black"
+            className="w-full rounded-xl bg-primary py-3 font-medium text-white transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
           >
             Mostrar respuesta
           </button>
@@ -78,7 +78,7 @@ export function FlashcardCard({
                 key={rating}
                 onClick={() => handleRate(rating)}
                 disabled={saving}
-                className={`rounded-xl py-3 text-sm font-medium text-white disabled:opacity-50 ${classes}`}
+                className={`rounded-xl py-3 text-sm font-medium text-white transition-all duration-150 active:scale-95 disabled:opacity-50 ${classes}`}
               >
                 {label}
               </button>

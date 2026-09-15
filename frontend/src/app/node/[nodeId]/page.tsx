@@ -88,7 +88,7 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6 py-10">
       <div>
-        <Link href="/" className="text-sm underline">
+        <Link href="/" className="text-sm text-primary underline transition-opacity hover:opacity-75">
           ← Volver al árbol
         </Link>
         <h1 className="mt-2 text-2xl font-semibold">{node.title}</h1>
@@ -99,7 +99,7 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
         {reviewExercises.length > 0 && (
           <Link
             href={`/node/${nodeId}/review`}
-            className="flex items-center justify-between rounded-lg border border-blue-300 bg-blue-50 px-4 py-3 hover:brightness-95 dark:border-blue-700 dark:bg-blue-950"
+            className="flex items-center justify-between rounded-lg border border-primary/40 bg-primary-light px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
           >
             <span className="font-medium">📚 Flashcards y recall</span>
             <span className="text-sm">
@@ -112,7 +112,7 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
           <Link
             key={exercise.id}
             href={`/node/${nodeId}/exercise/${exercise.id}`}
-            className="flex items-center justify-between rounded-lg border px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+            className="flex items-center justify-between rounded-lg border px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] dark:hover:bg-zinc-900"
           >
             <span>
               <span className="mr-2 rounded bg-zinc-100 px-2 py-0.5 text-xs dark:bg-zinc-800">

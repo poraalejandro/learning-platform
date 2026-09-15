@@ -39,7 +39,7 @@ export default async function ExercisePage({
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6 py-10">
-      <Link href={`/node/${nodeId}`} className="text-sm underline">
+      <Link href={`/node/${nodeId}`} className="text-sm text-primary underline transition-opacity hover:opacity-75">
         ← Volver a los ejercicios
       </Link>
 

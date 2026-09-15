@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { recordAttempt, recomputeNodeStatus } from "@/lib/progress";
 import { flagIfStruggling, maybeAdvanceOnRetry } from "@/lib/mistakes";
+import { celebrate } from "@/lib/confetti";
 import type { MatchContent } from "@/lib/exercises";
 
 function shuffle<T>(items: T[]): T[] {
@@ -46,6 +47,7 @@ export function MatchExercise({
 
       if (updated.size === content.pairs.length) {
         setDone(true);
+        celebrate();
         await recordAttempt({ exerciseId, status: "passed" });
         await recomputeNodeStatus(nodeId);
         await maybeAdvanceOnRetry(exerciseId);
@@ -73,11 +75,11 @@ export function MatchExercise({
                 key={term}
                 onClick={() => !isMatched && setSelectedTerm(isSelected ? null : term)}
                 disabled={isMatched}
-                className={`rounded border px-3 py-2 text-left text-sm transition ${
+                className={`rounded border px-3 py-2 text-left text-sm transition-all duration-150 active:scale-95 ${
                   isMatched
                     ? "border-green-300 bg-green-50 text-green-900 dark:border-green-700 dark:bg-green-950 dark:text-green-100"
                     : isSelected
-                      ? "border-blue-400 bg-blue-50 dark:border-blue-600 dark:bg-blue-950"
+                      ? "border-primary bg-primary-light"
                       : "hover:bg-zinc-50 dark:hover:bg-zinc-900"
                 }`}
               >
@@ -95,11 +97,11 @@ export function MatchExercise({
                 key={definition}
                 onClick={() => handleDefinitionClick(definition)}
                 disabled={isMatched || !selectedTerm}
-                className={`rounded border px-3 py-2 text-left text-sm transition ${
+                className={`rounded border px-3 py-2 text-left text-sm transition-all duration-150 active:scale-95 ${
                   isMatched
                     ? "border-green-300 bg-green-50 text-green-900 dark:border-green-700 dark:bg-green-950 dark:text-green-100"
                     : shakeDefinition === definition
-                      ? "border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950"
+                      ? "animate-shake border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950"
                       : "hover:bg-zinc-50 disabled:opacity-60 dark:hover:bg-zinc-900"
                 }`}
               >
@@ -111,8 +113,8 @@ export function MatchExercise({
       </div>
 
       {done && (
-        <p className="font-medium text-green-700 dark:text-green-400">
-          ¡Todo emparejado correctamente! Progreso guardado.
+        <p className="animate-pop-in font-medium text-green-700 dark:text-green-400">
+          ✅ ¡Todo emparejado correctamente! Progreso guardado.
         </p>
       )}
     </div>

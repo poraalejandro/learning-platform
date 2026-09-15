@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { recordAttempt, recomputeNodeStatus } from "@/lib/progress";
 import { flagIfStruggling, maybeAdvanceOnRetry } from "@/lib/mistakes";
+import { celebrate } from "@/lib/confetti";
 import type { PredictOutputContent } from "@/lib/exercises";
 
 export function PredictOutputExercise({
@@ -24,6 +25,7 @@ export function PredictOutputExercise({
     setChecked(true);
     await recordAttempt({ exerciseId, status: isCorrect ? "passed" : "failed", submittedCode: prediction });
     if (isCorrect) {
+      celebrate();
       await recomputeNodeStatus(nodeId);
       await maybeAdvanceOnRetry(exerciseId);
     } else {
@@ -52,7 +54,7 @@ export function PredictOutputExercise({
         <button
           onClick={handleCheck}
           disabled={!prediction}
-          className="self-start rounded bg-black px-3 py-2 text-sm text-white disabled:opacity-50"
+          className="self-start rounded bg-primary px-3 py-2 text-sm text-white transition-all duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
         >
           Comprobar
         </button>
@@ -60,7 +62,7 @@ export function PredictOutputExercise({
 
       {checked && (
         <div
-          className={`rounded border p-3 text-sm ${
+          className={`animate-pop-in rounded border p-3 text-sm ${
             correct
               ? "border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950"
               : "border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950"
