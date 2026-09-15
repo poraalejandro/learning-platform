@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { computeNodeStatuses, type SkillNode } from "@/lib/skillTree";
 import { fetchTreeProgress } from "@/lib/treeProgress";
 import { GATING_EXERCISE_TYPES, type Exercise, type ExerciseType } from "@/lib/exercises";
+import { Navbar } from "@/components/Navbar";
 
 const TYPE_LABEL: Record<ExerciseType, string> = {
   code: "Código",
@@ -87,48 +88,51 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
   }
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6 py-10">
-      <div>
-        <Link href="/" className="text-sm text-primary underline transition-opacity hover:opacity-75">
-          ← Volver al árbol
-        </Link>
-        <h1 className="mt-2 text-2xl font-semibold">{node.title}</h1>
-        {node.description && <p className="text-muted">{node.description}</p>}
-      </div>
-
-      <div className="flex flex-col gap-2">
-        {reviewExercises.length > 0 && (
-          <Link
-            href={`/node/${nodeId}/review`}
-            className="flex items-center justify-between rounded-xl border border-primary/45 bg-primary/10 px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
-          >
-            <span className="font-medium">📚 Flashcards y recall</span>
-            <span className="text-sm">
-              {dueCount > 0 ? `🔁 ${dueCount} pendiente${dueCount === 1 ? "" : "s"}` : "✅ Al día"}
-            </span>
+    <>
+      <Navbar userEmail={user.email ?? ""} active="tree" />
+      <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6 py-10">
+        <div>
+          <Link href="/" className="text-sm text-primary underline transition-opacity hover:opacity-75">
+            ← Volver al árbol
           </Link>
-        )}
+          <h1 className="mt-2 text-2xl font-semibold">{node.title}</h1>
+          {node.description && <p className="text-muted">{node.description}</p>}
+        </div>
 
-        {gatingExercises.map((exercise) => (
-          <Link
-            key={exercise.id}
-            href={`/node/${nodeId}/exercise/${exercise.id}`}
-            className="flex items-center justify-between rounded-xl border bg-surface px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
-          >
-            <span>
-              <span className="mr-2 rounded-md bg-surface-2 px-2 py-0.5 text-xs">
-                {TYPE_LABEL[exercise.type]}
+        <div className="flex flex-col gap-2">
+          {reviewExercises.length > 0 && (
+            <Link
+              href={`/node/${nodeId}/review`}
+              className="flex items-center justify-between rounded-xl border border-primary/45 bg-primary/10 px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
+            >
+              <span className="font-medium">📚 Flashcards y recall</span>
+              <span className="text-sm">
+                {dueCount > 0 ? `🔁 ${dueCount} pendiente${dueCount === 1 ? "" : "s"}` : "✅ Al día"}
               </span>
-              Ejercicio {exercise.position}
-            </span>
-            <span className="text-sm">{gatingExerciseBadge(exercise.id)}</span>
-          </Link>
-        ))}
-      </div>
+            </Link>
+          )}
 
-      {typedExercises.length === 0 && (
-        <p className="text-muted">Todavía no hay ejercicios para este nodo.</p>
-      )}
-    </main>
+          {gatingExercises.map((exercise) => (
+            <Link
+              key={exercise.id}
+              href={`/node/${nodeId}/exercise/${exercise.id}`}
+              className="flex items-center justify-between rounded-xl border bg-surface px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
+            >
+              <span>
+                <span className="mr-2 rounded-md bg-surface-2 px-2 py-0.5 text-xs">
+                  {TYPE_LABEL[exercise.type]}
+                </span>
+                Ejercicio {exercise.position}
+              </span>
+              <span className="text-sm">{gatingExerciseBadge(exercise.id)}</span>
+            </Link>
+          ))}
+        </div>
+
+        {typedExercises.length === 0 && (
+          <p className="text-muted">Todavía no hay ejercicios para este nodo.</p>
+        )}
+      </main>
+    </>
   );
 }

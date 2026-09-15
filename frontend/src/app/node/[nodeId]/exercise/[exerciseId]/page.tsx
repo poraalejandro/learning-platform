@@ -13,6 +13,7 @@ import { CodeExercise } from "@/components/CodeExercise";
 import { PredictOutputExercise } from "@/components/PredictOutputExercise";
 import { MatchExercise } from "@/components/MatchExercise";
 import { ParsonsExercise } from "@/components/ParsonsExercise";
+import { Navbar } from "@/components/Navbar";
 
 export default async function ExercisePage({
   params,
@@ -69,46 +70,49 @@ export default async function ExercisePage({
   const nextHref = nextExercise ? `/node/${nodeId}/exercise/${nextExercise.id}` : null;
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6 py-10">
-      <Link href={`/node/${nodeId}`} className="text-sm text-primary underline transition-opacity hover:opacity-75">
-        ← Volver a los ejercicios
-      </Link>
+    <>
+      <Navbar userEmail={user.email ?? ""} active="tree" />
+      <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6 py-10">
+        <Link href={`/node/${nodeId}`} className="text-sm text-primary underline transition-opacity hover:opacity-75">
+          ← Volver a los ejercicios
+        </Link>
 
-      {/* fix_bug reuses CodeExercise as-is: same content shape (starter_code
-          just happens to be broken instead of a stub), same editor + test
-          runner. */}
-      {(typedExercise.type === "code" || typedExercise.type === "fix_bug") && (
-        <CodeExercise
-          exerciseId={exerciseId}
-          nodeId={nodeId}
-          nextHref={nextHref}
-          content={typedExercise.content as CodeContent}
-        />
-      )}
-      {typedExercise.type === "predict_output" && (
-        <PredictOutputExercise
-          exerciseId={exerciseId}
-          nodeId={nodeId}
-          nextHref={nextHref}
-          content={typedExercise.content as PredictOutputContent}
-        />
-      )}
-      {typedExercise.type === "match" && (
-        <MatchExercise
-          exerciseId={exerciseId}
-          nodeId={nodeId}
-          nextHref={nextHref}
-          content={typedExercise.content as MatchContent}
-        />
-      )}
-      {typedExercise.type === "parsons" && (
-        <ParsonsExercise
-          exerciseId={exerciseId}
-          nodeId={nodeId}
-          nextHref={nextHref}
-          content={typedExercise.content as ParsonsContent}
-        />
-      )}
-    </main>
+        {/* fix_bug reuses CodeExercise as-is: same content shape (starter_code
+            just happens to be broken instead of a stub), same editor + test
+            runner. */}
+        {(typedExercise.type === "code" || typedExercise.type === "fix_bug") && (
+          <CodeExercise
+            exerciseId={exerciseId}
+            nodeId={nodeId}
+            nextHref={nextHref}
+            content={typedExercise.content as CodeContent}
+          />
+        )}
+        {typedExercise.type === "predict_output" && (
+          <PredictOutputExercise
+            exerciseId={exerciseId}
+            nodeId={nodeId}
+            nextHref={nextHref}
+            content={typedExercise.content as PredictOutputContent}
+          />
+        )}
+        {typedExercise.type === "match" && (
+          <MatchExercise
+            exerciseId={exerciseId}
+            nodeId={nodeId}
+            nextHref={nextHref}
+            content={typedExercise.content as MatchContent}
+          />
+        )}
+        {typedExercise.type === "parsons" && (
+          <ParsonsExercise
+            exerciseId={exerciseId}
+            nodeId={nodeId}
+            nextHref={nextHref}
+            content={typedExercise.content as ParsonsContent}
+          />
+        )}
+      </main>
+    </>
   );
 }

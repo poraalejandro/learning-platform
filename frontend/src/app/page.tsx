@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { computeNodeStatuses, type SkillNode } from "@/lib/skillTree";
 import { fetchTreeProgress } from "@/lib/treeProgress";
 import { SkillTree } from "@/components/SkillTree";
-import { signOut } from "./actions";
+import { Navbar } from "@/components/Navbar";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -58,43 +58,20 @@ export default async function Home() {
 
   return (
     <>
-      {/* A real app bar — sticky, hairline border, blurred translucent
-          backdrop — rather than a heading floating on the page. */}
-      <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex w-full max-w-4xl items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-2.5">
-            <span className="text-xl" aria-hidden>
-              🐍
-            </span>
-            <div className="leading-tight">
-              <h1 className="text-base font-semibold">learning-platform</h1>
-              <p className="text-xs text-muted">{user.email}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <span className="hidden rounded-full border border-primary/30 bg-primary-light px-3 py-1 text-xs font-medium text-primary sm:inline dark:text-white">
-              {completedCount} / {allNodes.length} completados
-            </span>
-            <form action={signOut}>
-              <button
-                type="submit"
-                className="rounded-lg border px-3 py-1.5 text-sm text-muted transition-all duration-150 hover:bg-surface-2 hover:text-foreground active:scale-95"
-              >
-                Salir
-              </button>
-            </form>
-          </div>
-        </div>
-      </header>
+      <Navbar userEmail={user.email ?? ""} active="tree" />
 
       <main className="flex flex-col items-center gap-8 px-6 py-10">
-        <div className="animate-rise-in w-full max-w-4xl">
-          <h2 className="text-2xl font-semibold">Tu ruta</h2>
-          <p className="mt-1 text-sm text-muted">
-            Completa los nodos para desbloquear los siguientes. Las side quests se abren desde su
-            nodo principal.
-          </p>
+        <div className="animate-rise-in flex w-full max-w-5xl flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold">Tu ruta</h1>
+            <p className="mt-1 text-sm text-muted">
+              Completa los nodos para desbloquear los siguientes. Las side quests se abren desde su
+              nodo principal.
+            </p>
+          </div>
+          <span className="rounded-full border border-primary/30 bg-primary-light px-3 py-1 text-xs font-medium text-primary dark:text-white">
+            {completedCount} / {allNodes.length} completados
+          </span>
         </div>
 
         <SkillTree
