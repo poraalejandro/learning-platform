@@ -92,14 +92,14 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
           ← Volver al árbol
         </Link>
         <h1 className="mt-2 text-2xl font-semibold">{node.title}</h1>
-        {node.description && <p className="text-zinc-500">{node.description}</p>}
+        {node.description && <p className="text-muted">{node.description}</p>}
       </div>
 
       <div className="flex flex-col gap-2">
         {reviewExercises.length > 0 && (
           <Link
             href={`/node/${nodeId}/review`}
-            className="flex items-center justify-between rounded-lg border border-primary/40 bg-primary-light px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
+            className="flex items-center justify-between rounded-xl border border-primary/45 bg-primary/10 px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
           >
             <span className="font-medium">📚 Flashcards y recall</span>
             <span className="text-sm">
@@ -112,10 +112,10 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
           <Link
             key={exercise.id}
             href={`/node/${nodeId}/exercise/${exercise.id}`}
-            className="flex items-center justify-between rounded-lg border px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] dark:hover:bg-zinc-900"
+            className="flex items-center justify-between rounded-xl border bg-surface px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
           >
             <span>
-              <span className="mr-2 rounded bg-zinc-100 px-2 py-0.5 text-xs dark:bg-zinc-800">
+              <span className="mr-2 rounded-md bg-surface-2 px-2 py-0.5 text-xs">
                 {TYPE_LABEL[exercise.type]}
               </span>
               Ejercicio {exercise.position}
@@ -126,7 +126,7 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
       </div>
 
       {typedExercises.length === 0 && (
-        <p className="text-zinc-500">Todavía no hay ejercicios para este nodo.</p>
+        <p className="text-muted">Todavía no hay ejercicios para este nodo.</p>
       )}
     </main>
   );

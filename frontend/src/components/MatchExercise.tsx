@@ -75,12 +75,12 @@ export function MatchExercise({
                 key={term}
                 onClick={() => !isMatched && setSelectedTerm(isSelected ? null : term)}
                 disabled={isMatched}
-                className={`rounded border px-3 py-2 text-left text-sm transition-all duration-150 active:scale-95 ${
+                className={`rounded-lg border px-3 py-2 text-left text-sm transition-all duration-150 active:scale-95 ${
                   isMatched
-                    ? "border-green-300 bg-green-50 text-green-900 dark:border-green-700 dark:bg-green-950 dark:text-green-100"
+                    ? "border-green-500/40 bg-green-500/10"
                     : isSelected
                       ? "border-primary bg-primary-light"
-                      : "hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                      : "hover:bg-surface-2"
                 }`}
               >
                 {term}
@@ -97,12 +97,12 @@ export function MatchExercise({
                 key={definition}
                 onClick={() => handleDefinitionClick(definition)}
                 disabled={isMatched || !selectedTerm}
-                className={`rounded border px-3 py-2 text-left text-sm transition-all duration-150 active:scale-95 ${
+                className={`rounded-lg border px-3 py-2 text-left text-sm transition-all duration-150 active:scale-95 ${
                   isMatched
-                    ? "border-green-300 bg-green-50 text-green-900 dark:border-green-700 dark:bg-green-950 dark:text-green-100"
+                    ? "border-green-500/40 bg-green-500/10"
                     : shakeDefinition === definition
-                      ? "animate-shake border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950"
-                      : "hover:bg-zinc-50 disabled:opacity-60 dark:hover:bg-zinc-900"
+                      ? "animate-shake border-red-500/50 bg-red-500/10"
+                      : "hover:bg-surface-2 disabled:opacity-60"
                 }`}
               >
                 {definition}
@@ -113,7 +113,7 @@ export function MatchExercise({
       </div>
 
       {done && (
-        <p className="animate-pop-in font-medium text-green-700 dark:text-green-400">
+        <p className="animate-pop-in font-medium text-green-600 dark:text-green-400">
           ✅ ¡Todo emparejado correctamente! Progreso guardado.
         </p>
       )}

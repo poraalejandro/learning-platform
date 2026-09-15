@@ -41,12 +41,12 @@ export function FlashcardSession({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <div className="mb-1 flex justify-between text-sm text-zinc-500">
+        <div className="mb-1 flex justify-between text-sm text-muted">
           <span>
             Tarjeta {index + 1} de {items.length}
           </span>
         </div>
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
           <div
             className="h-full rounded-full bg-primary transition-all duration-300"
             style={{ width: `${progress}%` }}

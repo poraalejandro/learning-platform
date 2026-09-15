@@ -12,14 +12,19 @@ export default async function Home() {
 
   if (!user) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-3 p-6">
-        <h1 className="text-2xl font-semibold">learning-platform</h1>
-        <p>Not signed in.</p>
+      <main className="animate-rise-in flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
+        <span className="text-4xl" aria-hidden>
+          🐍
+        </span>
+        <h1 className="text-3xl font-semibold">learning-platform</h1>
+        <p className="max-w-sm text-muted">
+          Aprende Python e ingeniería de IA resolviendo ejercicios, no leyendo lecciones.
+        </p>
         <Link
           href="/login"
-          className="rounded bg-primary px-3 py-2 text-white transition-all duration-150 hover:brightness-110 active:scale-95"
+          className="mt-2 rounded-lg bg-primary px-5 py-2.5 font-medium text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:scale-95"
         >
-          Sign in
+          Entrar
         </Link>
       </main>
     );
@@ -48,32 +53,57 @@ export default async function Home() {
     }
   }
 
+  const completedCount = [...statuses.values()].filter((s) => s === "completed").length;
+
   return (
-    <main className="flex min-h-screen flex-col items-center gap-8 p-6 py-10">
-      <div className="flex w-full max-w-3xl items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">learning-platform</h1>
-          <p className="text-sm text-zinc-500">
-            Signed in as <span className="font-medium">{user.email}</span>
+    <>
+      {/* A real app bar — sticky, hairline border, blurred translucent
+          backdrop — rather than a heading floating on the page. */}
+      <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-4xl items-center justify-between px-6 py-3">
+          <div className="flex items-center gap-2.5">
+            <span className="text-xl" aria-hidden>
+              🐍
+            </span>
+            <div className="leading-tight">
+              <h1 className="text-base font-semibold">learning-platform</h1>
+              <p className="text-xs text-muted">{user.email}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="hidden rounded-full border border-primary/30 bg-primary-light px-3 py-1 text-xs font-medium text-primary sm:inline dark:text-white">
+              {completedCount} / {allNodes.length} completados
+            </span>
+            <form action={signOut}>
+              <button
+                type="submit"
+                className="rounded-lg border px-3 py-1.5 text-sm text-muted transition-all duration-150 hover:bg-surface-2 hover:text-foreground active:scale-95"
+              >
+                Salir
+              </button>
+            </form>
+          </div>
+        </div>
+      </header>
+
+      <main className="flex flex-col items-center gap-8 px-6 py-10">
+        <div className="animate-rise-in w-full max-w-4xl">
+          <h2 className="text-2xl font-semibold">Tu ruta</h2>
+          <p className="mt-1 text-sm text-muted">
+            Completa los nodos para desbloquear los siguientes. Las side quests se abren desde su
+            nodo principal.
           </p>
         </div>
-        <form action={signOut}>
-          <button
-            type="submit"
-            className="rounded border px-3 py-2 text-sm underline transition-colors duration-150 hover:bg-zinc-50 active:scale-95 dark:hover:bg-zinc-900"
-          >
-            Sign out
-          </button>
-        </form>
-      </div>
 
-      <SkillTree
-        mainNodes={mainNodes}
-        sideNodes={sideNodes}
-        statuses={statuses}
-        sideUnlockTitles={sideUnlockTitles}
-        sideParentId={sideParentId}
-      />
-    </main>
+        <SkillTree
+          mainNodes={mainNodes}
+          sideNodes={sideNodes}
+          statuses={statuses}
+          sideUnlockTitles={sideUnlockTitles}
+          sideParentId={sideParentId}
+        />
+      </main>
+    </>
   );
 }

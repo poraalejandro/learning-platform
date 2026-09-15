@@ -1,21 +1,48 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Surfaces are layered rather than flat: the page is a hair off-white,
+     cards sit *brighter* than it. In dark mode that inverts — elevation
+     reads as lighter, not as a heavier shadow. */
+  --background: #fbfbfd;
+  --surface: #ffffff;
+  --surface-2: #f3f4f7;
+  --foreground: #16181d;
+  --muted: #6b7280;
+  --border: #e5e7eb;
 
   /* Python's brand blue/yellow (#306998/#4B8BBE, #FFD43B/#FFE873),
-     desaturated and darkened/lightened for UI use — the originals are
-     designed for a logo, not for body text or large surfaces. */
+     desaturated and rebalanced for UI use — the originals are logo
+     colors, too saturated for body text or large surfaces. */
   --primary: #3f6f95;
-  --primary-light: #e3edf5;
-  --accent: #d3a13a;
-  --accent-light: #f8eed7;
+  --primary-light: #e8f0f7;
+  --accent: #c4922f;
+  --accent-light: #faf2e0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0b0c0e;
+    --surface: #141619;
+    --surface-2: #1b1e23;
+    --foreground: #eceef1;
+    --muted: #9aa1ab;
+    --border: #262a30;
+
+    --primary: #7fb2dd;
+    --primary-light: #16293a;
+    --accent: #e8c569;
+    --accent-light: #302713;
+  }
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
   --color-primary: var(--primary);
   --color-primary-light: var(--primary-light);
   --color-accent: var(--accent);
@@ -24,26 +51,48 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --primary: #7fb2dd;
-    --primary-light: #16293a;
-    --accent: #e8c569;
-    --accent-light: #362b13;
+@layer base {
+  /* Tailwind v4 leaves `border` colorless, so it inherits currentColor —
+     every bordered card was drawing a border as dark as its own text.
+     This restores a real neutral border token app-wide. */
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    /* Barely-there brand glow behind the page so it isn't a flat sheet. */
+    background-image: radial-gradient(
+      1100px 520px at 50% -15%,
+      color-mix(in srgb, var(--primary) 9%, transparent),
+      transparent 70%
+    );
+    background-attachment: fixed;
+    color: var(--foreground);
+    /* layout.tsx loads Geist and exposes it here; the create-next-app
+       template used to override it with Arial, which is why nothing
+       looked like the font that was actually being downloaded. */
+    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  /* Tight tracking on headings is most of what separates a "web page"
+     from an "app" visually. */
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
+  }
+
+  code,
+  pre {
+    font-family: var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-/* Reusable motion. prefers-reduced-motion is respected globally at the
-   bottom — every animation here is skipped for users who've asked for
-   less motion, not just the marquee ones. */
+/* Reusable motion. Everything here is disabled under
+   prefers-reduced-motion at the bottom of the file. */
 
 @keyframes pop-in {
   0% {
@@ -64,9 +113,24 @@ body {
   animation: pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-/* Used on SVG paths with pathLength="1" (see SkillTreeGraph) so the
-   dash math is always 0-1 regardless of the path's real geometric
-   length — draws the line in instead of having it just appear. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-rise-in {
+  animation: rise-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Used on SVG paths with pathLength="1" (see SkillTreeGraph) so the dash
+   math is always 0-1 regardless of the path's real geometric length —
+   draws the line in instead of having it just appear. */
 @keyframes draw-line {
   from {
     stroke-dashoffset: 1;
@@ -102,6 +166,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .animate-pop-in,
+  .animate-rise-in,
   .animate-draw-line,
   .animate-shake {
     animation: none !important;

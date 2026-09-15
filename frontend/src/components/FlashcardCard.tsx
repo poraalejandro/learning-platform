@@ -39,9 +39,9 @@ export function FlashcardCard({
   }
 
   return (
-    <div className="flex min-h-[22rem] flex-col justify-between rounded-2xl border bg-white p-8 shadow-sm dark:bg-zinc-950">
+    <div className="flex min-h-[22rem] flex-col justify-between rounded-2xl border bg-surface p-8 shadow-sm">
       <div>
-        <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-500 dark:bg-zinc-800">
+        <span className="rounded-full bg-surface-2 px-3 py-1 text-xs font-medium text-muted">
           {TYPE_LABEL[exercise.type] ?? exercise.type}
         </span>
 
@@ -56,7 +56,7 @@ export function FlashcardCard({
             <div className="animate-pop-in rounded-xl border-t-2 border-primary/30 bg-primary-light/60 p-5">
               <pre className="text-center font-sans text-base whitespace-pre-wrap">{answerText}</pre>
               {explanation && (
-                <p className="mt-3 text-center text-sm text-zinc-500">{explanation}</p>
+                <p className="mt-3 text-center text-sm text-muted">{explanation}</p>
               )}
             </div>
           </div>

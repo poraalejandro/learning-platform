@@ -2,11 +2,12 @@ import Link from "next/link";
 import type { NodeStatus, SkillNode } from "@/lib/skillTree";
 import { SkillTreeGraph } from "@/components/SkillTreeGraph";
 
+// Same alpha-tint approach as SkillTreeGraph — see the note there.
 const STATUS_STYLES: Record<NodeStatus, string> = {
-  locked: "border-zinc-200 bg-zinc-50 text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-600",
-  available: "border-primary/40 bg-primary-light text-primary dark:text-white",
-  in_progress: "border-accent/50 bg-accent-light text-accent dark:text-white",
-  completed: "border-green-300 bg-green-50 text-green-900 dark:border-green-700 dark:bg-green-950 dark:text-green-100",
+  locked: "border-border bg-surface-2 text-muted",
+  available: "border-primary/45 bg-primary/10",
+  in_progress: "border-accent/55 bg-accent/12",
+  completed: "border-green-500/40 bg-green-500/10",
 };
 
 const STATUS_LABEL: Record<NodeStatus, string> = {
@@ -37,13 +38,13 @@ function NodeCard({ node, status, unlockHint }: { node: SkillNode; status: NodeS
   );
 
   if (status === "locked") {
-    return <div className={`rounded-lg border px-4 py-3 ${STATUS_STYLES[status]}`}>{body}</div>;
+    return <div className={`rounded-xl border px-4 py-3 ${STATUS_STYLES[status]}`}>{body}</div>;
   }
 
   return (
     <Link
       href={`/node/${node.id}`}
-      className={`rounded-lg border px-4 py-3 transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] active:duration-75 ${STATUS_STYLES[status]}`}
+      className={`rounded-xl border px-4 py-3 transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] active:duration-75 ${STATUS_STYLES[status]}`}
     >
       {body}
     </Link>
@@ -74,7 +75,7 @@ export function SkillTree({
     <>
       <div className="grid w-full max-w-3xl grid-cols-1 gap-8 md:hidden">
         <section className="flex flex-col gap-2">
-          <h2 className="mb-1 text-sm font-semibold tracking-wide text-zinc-500 uppercase">
+          <h2 className="mb-1 text-sm font-semibold tracking-wide text-muted uppercase">
             Main quest
           </h2>
           {mainNodes.map((node) => (
@@ -83,7 +84,7 @@ export function SkillTree({
         </section>
 
         <section className="flex flex-col gap-2">
-          <h2 className="mb-1 text-sm font-semibold tracking-wide text-zinc-500 uppercase">
+          <h2 className="mb-1 text-sm font-semibold tracking-wide text-muted uppercase">
             Side quests
           </h2>
           {sideNodes.map((node) => (

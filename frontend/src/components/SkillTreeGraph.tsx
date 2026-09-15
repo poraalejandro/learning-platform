@@ -1,12 +1,16 @@
 import Link from "next/link";
 import type { NodeStatus, SkillNode } from "@/lib/skillTree";
 
+// Alpha tints rather than hardcoded light/dark colour pairs: a 10% wash of
+// the status colour sits correctly on both the light and the dark surface,
+// and the label itself stays the normal foreground colour — coloured text
+// on a tinted background was landing around 2.5:1 contrast, under the 4.5:1
+// minimum for body text.
 const STATUS_STYLES: Record<NodeStatus, string> = {
-  locked: "border-zinc-200 bg-zinc-50 text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-600",
-  available: "border-primary/40 bg-primary-light text-primary shadow-sm dark:text-white",
-  in_progress: "border-accent/50 bg-accent-light text-accent shadow-sm dark:text-white",
-  completed:
-    "border-green-300 bg-green-50 text-green-900 shadow-sm shadow-green-200/60 dark:border-green-700 dark:bg-green-950 dark:text-green-100",
+  locked: "border-border bg-surface-2 text-muted",
+  available: "border-primary/45 bg-primary/10 shadow-sm",
+  in_progress: "border-accent/55 bg-accent/12 shadow-sm",
+  completed: "border-green-500/40 bg-green-500/10 shadow-sm",
 };
 
 const STATUS_ICON: Record<NodeStatus, string> = {
@@ -126,8 +130,8 @@ export function SkillTreeGraph({
               strokeWidth={2}
               className={
                 walked
-                  ? "animate-draw-line stroke-green-400 dark:stroke-green-700"
-                  : "stroke-zinc-200 dark:stroke-zinc-800"
+                  ? "animate-draw-line stroke-green-500"
+                  : "stroke-border"
               }
               strokeDasharray={walked ? undefined : "0.03 0.03"}
               vectorEffect="non-scaling-stroke"
@@ -148,8 +152,8 @@ export function SkillTreeGraph({
               strokeWidth={2}
               className={
                 walked
-                  ? "animate-draw-line stroke-green-400 dark:stroke-green-700"
-                  : "stroke-zinc-200 dark:stroke-zinc-800"
+                  ? "animate-draw-line stroke-green-500"
+                  : "stroke-border"
               }
               strokeDasharray={walked ? undefined : "0.03 0.03"}
               vectorEffect="non-scaling-stroke"

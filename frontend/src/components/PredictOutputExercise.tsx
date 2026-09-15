@@ -37,7 +37,7 @@ export function PredictOutputExercise({
     <div className="flex flex-col gap-4">
       <p className="whitespace-pre-wrap">{content.prompt}</p>
 
-      <pre className="overflow-x-auto rounded border bg-zinc-50 p-3 text-sm dark:bg-zinc-900">{content.code}</pre>
+      <pre className="overflow-x-auto rounded-lg border bg-surface-2 p-3 text-sm">{content.code}</pre>
 
       <label className="flex flex-col gap-1 text-sm">
         ¿Qué crees que imprime o devuelve este código?
@@ -46,7 +46,7 @@ export function PredictOutputExercise({
           value={prediction}
           onChange={(e) => setPrediction(e.target.value)}
           disabled={checked}
-          className="rounded border px-3 py-2 disabled:opacity-60"
+          className="rounded-lg border px-3 py-2 disabled:opacity-60"
         />
       </label>
 
@@ -54,7 +54,7 @@ export function PredictOutputExercise({
         <button
           onClick={handleCheck}
           disabled={!prediction}
-          className="self-start rounded bg-primary px-3 py-2 text-sm text-white transition-all duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
+          className="self-start rounded-lg bg-primary px-3 py-2 text-sm text-white transition-all duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
         >
           Comprobar
         </button>
@@ -62,16 +62,16 @@ export function PredictOutputExercise({
 
       {checked && (
         <div
-          className={`animate-pop-in rounded border p-3 text-sm ${
+          className={`animate-pop-in rounded-lg border p-3 text-sm ${
             correct
-              ? "border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950"
-              : "border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950"
+              ? "border-green-500/40 bg-green-500/10"
+              : "border-red-500/40 bg-red-500/10"
           }`}
         >
           <p className="font-medium">
             {correct ? "✅ ¡Correcto!" : `❌ La salida real es: ${content.expected_output}`}
           </p>
-          {content.explanation && <p className="mt-1 text-zinc-500">{content.explanation}</p>}
+          {content.explanation && <p className="mt-1 text-muted">{content.explanation}</p>}
         </div>
       )}
     </div>

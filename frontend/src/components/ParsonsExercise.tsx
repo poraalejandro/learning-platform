@@ -68,7 +68,7 @@ export function ParsonsExercise({
         {lines.map((line, i) => (
           <li
             key={`${i}-${line}`}
-            className="flex items-center gap-3 rounded border bg-zinc-50 px-3 py-2 transition-colors dark:bg-zinc-900"
+            className="flex items-center gap-3 rounded-lg border bg-surface-2 px-3 py-2 transition-colors"
           >
             <div className="flex flex-col gap-0.5 text-xs">
               <button
@@ -96,14 +96,14 @@ export function ParsonsExercise({
       <div className="flex flex-wrap gap-2">
         <button
           onClick={handleCheck}
-          className="rounded bg-primary px-3 py-2 text-sm text-white transition-all duration-150 hover:brightness-110 active:scale-95"
+          className="rounded-lg bg-primary px-3 py-2 text-sm text-white transition-all duration-150 hover:brightness-110 active:scale-95"
         >
           Comprobar orden
         </button>
         {!showSolution && (
           <button
             onClick={handleRevealSolution}
-            className="rounded border px-3 py-2 text-sm transition-all duration-150 hover:bg-zinc-50 active:scale-95 dark:hover:bg-zinc-900"
+            className="rounded-lg border px-3 py-2 text-sm transition-all duration-150 hover:bg-surface-2 active:scale-95 "
           >
             🏳 Ver solución
           </button>
@@ -112,7 +112,7 @@ export function ParsonsExercise({
 
       {checked !== null && (
         <p
-          className={`animate-pop-in ${checked ? "font-medium text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400"}`}
+          className={`animate-pop-in ${checked ? "font-medium text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
         >
           {checked ? "✅ ¡Orden correcto! Progreso guardado." : "❌ Todavía no es el orden correcto."}
         </p>

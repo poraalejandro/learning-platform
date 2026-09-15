@@ -126,7 +126,7 @@ export function CodeExercise({
         <button
           onClick={handleRun}
           disabled={running}
-          className="rounded bg-primary px-3 py-2 text-sm text-white transition-all duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
+          className="rounded-lg bg-primary px-3 py-2 text-sm text-white transition-all duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
         >
           {running ? "Ejecutando..." : "▶ Ejecutar"}
         </button>
@@ -134,7 +134,7 @@ export function CodeExercise({
           <button
             onClick={handleRequestHint}
             disabled={hintLoading}
-            className="rounded border px-3 py-2 text-sm transition-all duration-150 hover:bg-zinc-50 active:scale-95 disabled:opacity-50 dark:hover:bg-zinc-900"
+            className="rounded-lg border px-3 py-2 text-sm transition-all duration-150 hover:bg-surface-2 active:scale-95 disabled:opacity-50 "
           >
             {hintLoading ? "Pensando..." : `💡 Pista (${hintLevel}/${maxLevel})`}
           </button>
@@ -142,7 +142,7 @@ export function CodeExercise({
         {!showSolution && (
           <button
             onClick={handleRevealSolution}
-            className="rounded border px-3 py-2 text-sm transition-all duration-150 hover:bg-zinc-50 active:scale-95 dark:hover:bg-zinc-900"
+            className="rounded-lg border px-3 py-2 text-sm transition-all duration-150 hover:bg-surface-2 active:scale-95 "
           >
             🏳 Ver solución
           </button>
@@ -150,7 +150,7 @@ export function CodeExercise({
       </div>
 
       {hints.length > 0 && (
-        <ul className="flex flex-col gap-1 rounded border border-accent/40 bg-accent-light p-3 text-sm">
+        <ul className="flex flex-col gap-1 rounded-lg border border-accent/40 bg-accent-light p-3 text-sm">
           {hints.map((hint, i) => (
             <li key={i} className="animate-pop-in">
               💡 {hint.text}
@@ -164,7 +164,7 @@ export function CodeExercise({
           {results.map((result, i) => (
             <li
               key={i}
-              className={result.passed ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400"}
+              className={result.passed ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}
             >
               {result.passed ? "✅" : "❌"} {result.call} → {result.error ?? result.actual}
               {!result.passed && !result.error && ` (esperado: ${result.expected})`}
@@ -174,13 +174,13 @@ export function CodeExercise({
       )}
 
       {passed && (
-        <p className="animate-pop-in font-medium text-green-700 dark:text-green-400">
+        <p className="animate-pop-in font-medium text-green-600 dark:text-green-400">
           ✅ ¡Correcto! Progreso guardado.
         </p>
       )}
 
       {showSolution && (
-        <pre className="overflow-x-auto rounded border bg-zinc-50 p-3 text-sm dark:bg-zinc-900">
+        <pre className="overflow-x-auto rounded-lg border bg-surface-2 p-3 text-sm">
           {content.solution}
         </pre>
       )}
