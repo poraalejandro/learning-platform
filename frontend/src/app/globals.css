@@ -18,6 +18,22 @@
   --primary-light: #e8f0f7;
   --accent: #c4922f;
   --accent-light: #faf2e0;
+  --success: #22c55e;
+  --success-light: #e7f8ee;
+
+  /* Status tints as *opaque* colours (the status colour mixed into the
+     surface) rather than an alpha wash. A translucent card lets whatever
+     is behind it show through — in the skill tree that meant the
+     connector lines were visible straight through the nodes.
+     The first declaration of each pair is the fallback a browser without
+     color-mix keeps; without it the fallback would be the fully saturated
+     colour, which has no contrast against foreground text. */
+  --tint-primary: var(--primary-light);
+  --tint-primary: color-mix(in srgb, var(--primary) 13%, var(--surface));
+  --tint-accent: var(--accent-light);
+  --tint-accent: color-mix(in srgb, var(--accent) 15%, var(--surface));
+  --tint-success: var(--success-light);
+  --tint-success: color-mix(in srgb, var(--success) 13%, var(--surface));
 }
 
 @media (prefers-color-scheme: dark) {
@@ -33,6 +49,8 @@
     --primary-light: #16293a;
     --accent: #e8c569;
     --accent-light: #302713;
+    --success: #4ade80;
+    --success-light: #12251a;
   }
 }
 
@@ -47,6 +65,10 @@
   --color-primary-light: var(--primary-light);
   --color-accent: var(--accent);
   --color-accent-light: var(--accent-light);
+  --color-success: var(--success);
+  --color-tint-primary: var(--tint-primary);
+  --color-tint-accent: var(--tint-accent);
+  --color-tint-success: var(--tint-success);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

@@ -2,12 +2,12 @@ import Link from "next/link";
 import type { NodeStatus, SkillNode } from "@/lib/skillTree";
 import { SkillTreeGraph } from "@/components/SkillTreeGraph";
 
-// Same alpha-tint approach as SkillTreeGraph — see the note there.
+// Same opaque-tint approach as SkillTreeGraph — see the note there.
 const STATUS_STYLES: Record<NodeStatus, string> = {
   locked: "border-border bg-surface-2 text-muted",
-  available: "border-primary/45 bg-primary/10",
-  in_progress: "border-accent/55 bg-accent/12",
-  completed: "border-green-500/40 bg-green-500/10",
+  available: "border-primary/45 bg-tint-primary",
+  in_progress: "border-accent/55 bg-tint-accent",
+  completed: "border-success/50 bg-tint-success",
 };
 
 const STATUS_LABEL: Record<NodeStatus, string> = {

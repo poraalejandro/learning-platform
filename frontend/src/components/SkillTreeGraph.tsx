@@ -1,16 +1,16 @@
 import Link from "next/link";
 import type { NodeStatus, SkillNode } from "@/lib/skillTree";
 
-// Alpha tints rather than hardcoded light/dark colour pairs: a 10% wash of
-// the status colour sits correctly on both the light and the dark surface,
-// and the label itself stays the normal foreground colour — coloured text
-// on a tinted background was landing around 2.5:1 contrast, under the 4.5:1
-// minimum for body text.
+// Opaque tints (status colour mixed into the surface), not alpha washes:
+// the nodes sit on top of the connector lines, so a translucent card let
+// the line show straight through it. The label stays neutral foreground —
+// coloured text on a tinted background measured about 2.5:1 contrast,
+// under the 4.5:1 minimum for body text.
 const STATUS_STYLES: Record<NodeStatus, string> = {
   locked: "border-border bg-surface-2 text-muted",
-  available: "border-primary/45 bg-primary/10 shadow-sm",
-  in_progress: "border-accent/55 bg-accent/12 shadow-sm",
-  completed: "border-green-500/40 bg-green-500/10 shadow-sm",
+  available: "border-primary/45 bg-tint-primary shadow-sm",
+  in_progress: "border-accent/55 bg-tint-accent shadow-sm",
+  completed: "border-success/50 bg-tint-success shadow-sm",
 };
 
 const STATUS_ICON: Record<NodeStatus, string> = {
@@ -31,6 +31,16 @@ const ZIGZAG = 13;
 const SIDE_X = 86;
 const CARD_WIDTH = 152;
 const SIDE_CARD_WIDTH = 116;
+
+// Connectors are anchored to node *centres*, so each end has to be pulled
+// back to the card's edge — otherwise the line is born in the middle of a
+// node and disappears under it. Vertical trim is in px (same unit as y);
+// horizontal trim is in the viewBox's percent-ish x unit, sized for the
+// narrowest width the graph renders at (md:, ~720px of content) so the
+// line never tucks under a card at any width.
+const VERTICAL_TRIM = 32;
+const MAIN_CARD_X_TRIM = 10.5;
+const SIDE_CARD_X_TRIM = 8;
 
 type Position = { node: SkillNode; x: number; y: number };
 
@@ -62,7 +72,7 @@ function GraphNode({
 
   if (status === "locked") {
     return (
-      <div style={wrapperStyle} className="absolute -translate-x-1/2 -translate-y-1/2">
+      <div style={wrapperStyle} className="absolute z-10 -translate-x-1/2 -translate-y-1/2">
         <div title={title} className={`rounded-xl border px-3 py-2 ${STATUS_STYLES[status]}`}>
           {body}
         </div>
@@ -71,7 +81,7 @@ function GraphNode({
   }
 
   return (
-    <div style={wrapperStyle} className="absolute -translate-x-1/2 -translate-y-1/2">
+    <div style={wrapperStyle} className="absolute z-10 -translate-x-1/2 -translate-y-1/2">
       <Link
         href={`/node/${position.node.id}`}
         className={`block rounded-xl border px-3 py-2 transition-all duration-200 ease-out hover:-translate-y-1 hover:scale-105 hover:shadow-lg active:scale-95 active:duration-75 ${STATUS_STYLES[status]}`}
@@ -114,25 +124,35 @@ export function SkillTreeGraph({
       <svg
         viewBox={`0 0 100 ${totalHeight}`}
         preserveAspectRatio="none"
-        className="absolute inset-0 h-full w-full"
+        className="absolute inset-0 z-0 h-full w-full"
       >
         {mainPositions.slice(0, -1).map((from, i) => {
           const to = mainPositions[i + 1];
           const walked = statuses.get(from.node.id) === "completed";
+
+          // Pull both ends back to the card edges, following the line's own
+          // direction so the x offset stays proportional to the y trim.
+          const dy = to.y - from.y;
+          const ratio = VERTICAL_TRIM / dy;
+          const startX = from.x + (to.x - from.x) * ratio;
+          const startY = from.y + VERTICAL_TRIM;
+          const endX = to.x - (to.x - from.x) * ratio;
+          const endY = to.y - VERTICAL_TRIM;
+
+          // Cubic that leaves and arrives vertically — reads as a path
+          // between two stops rather than a diagonal rule across the page.
+          const span = endY - startY;
+          const d = `M ${startX} ${startY} C ${startX} ${startY + span * 0.5}, ${endX} ${endY - span * 0.5}, ${endX} ${endY}`;
+
           return (
-            <line
+            <path
               key={`main-${from.node.id}`}
-              x1={from.x}
-              y1={from.y}
-              x2={to.x}
-              y2={to.y}
+              d={d}
+              fill="none"
               pathLength={1}
               strokeWidth={2}
-              className={
-                walked
-                  ? "animate-draw-line stroke-green-500"
-                  : "stroke-border"
-              }
+              strokeLinecap="round"
+              className={walked ? "animate-draw-line stroke-success" : "stroke-border"}
               strokeDasharray={walked ? undefined : "0.03 0.03"}
               vectorEffect="non-scaling-stroke"
             />
@@ -141,20 +161,23 @@ export function SkillTreeGraph({
         {sidePositions.map(({ node, x, y, parent }) => {
           if (!parent) return null;
           const walked = statuses.get(parent.node.id) === "completed";
+
+          // Side branches run horizontally at their parent's row, so the
+          // trim is on x here rather than y.
+          const startX = parent.x + MAIN_CARD_X_TRIM;
+          const endX = x - SIDE_CARD_X_TRIM;
+
           return (
             <line
               key={`side-${node.id}`}
-              x1={parent.x}
+              x1={startX}
               y1={parent.y}
-              x2={x}
+              x2={endX}
               y2={y}
               pathLength={1}
               strokeWidth={2}
-              className={
-                walked
-                  ? "animate-draw-line stroke-green-500"
-                  : "stroke-border"
-              }
+              strokeLinecap="round"
+              className={walked ? "animate-draw-line stroke-success" : "stroke-border"}
               strokeDasharray={walked ? undefined : "0.03 0.03"}
               vectorEffect="non-scaling-stroke"
             />
