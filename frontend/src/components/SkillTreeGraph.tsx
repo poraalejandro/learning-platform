@@ -4,10 +4,14 @@ import { sectionLabel } from "@/lib/sections";
 
 // Faint, distinct per section — these are large background bands, so they
 // have to stay quiet enough not to compete with node status colours.
-const ZONE_STYLES: Record<string, string> = {
-  python: "bg-primary/[6%]",
-  genai: "bg-accent/[8%]",
-  project: "bg-success/[6%]",
+// color-mix against transparent (not a flat colour) so a single linear-
+// gradient across the whole tree can fade smoothly between sections *and*
+// fade out to the page background at the very top and bottom, rather than
+// each section being a flat rect with a hard edge.
+const ZONE_GRADIENT_COLOR: Record<string, string> = {
+  python: "color-mix(in srgb, var(--primary) 14%, transparent)",
+  genai: "color-mix(in srgb, var(--accent) 16%, transparent)",
+  project: "color-mix(in srgb, var(--success) 14%, transparent)",
 };
 
 // Opaque tints (status colour mixed into the surface), not alpha washes:
@@ -74,6 +78,28 @@ function computeZones(mainPositions: Position[], totalHeight: number): Zone[] {
   }
   zones.push({ section: currentSection, top: zoneStart, bottom: totalHeight });
   return zones;
+}
+
+/**
+ * One gradient for the whole tree rather than one rect per zone: a colour
+ * stop at each zone's midpoint, transparent at 0% and 100%. Adjacent
+ * sections blend into each other across their shared boundary instead of
+ * meeting at a hard edge, and the very top/bottom fade into the page
+ * background — light or dark — since "transparent" is genuinely transparent,
+ * not a hardcoded colour.
+ */
+function zoneGradient(zones: Zone[], totalHeight: number): string {
+  if (zones.length === 0 || totalHeight === 0) return "none";
+
+  const stops = ["transparent 0%"];
+  for (const zone of zones) {
+    const midpoint = (((zone.top + zone.bottom) / 2) / totalHeight) * 100;
+    const color = ZONE_GRADIENT_COLOR[zone.section] ?? "transparent";
+    stops.push(`${color} ${midpoint.toFixed(2)}%`);
+  }
+  stops.push("transparent 100%");
+
+  return `linear-gradient(to bottom, ${stops.join(", ")})`;
 }
 
 function GraphNode({
@@ -154,13 +180,10 @@ export function SkillTreeGraph({
 
   return (
     <div className="relative w-full" style={{ height: totalHeight }}>
-      {zones.map((zone) => (
-        <div
-          key={`zone-${zone.section}`}
-          className={`absolute inset-x-0 z-0 ${ZONE_STYLES[zone.section] ?? "bg-surface-2/40"}`}
-          style={{ top: zone.top, height: zone.bottom - zone.top }}
-        />
-      ))}
+      <div
+        className="absolute inset-x-0 top-0 z-0"
+        style={{ height: totalHeight, backgroundImage: zoneGradient(zones, totalHeight) }}
+      />
       {zones.map((zone) => (
         <div
           key={`label-${zone.section}`}
