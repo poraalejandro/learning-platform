@@ -1,7 +1,13 @@
 import Link from "next/link";
 import type { NodeStatus, SkillNode } from "@/lib/skillTree";
 import { sectionLabel, uniqueSectionsInOrder } from "@/lib/sections";
-import { SkillTreeGraph } from "@/components/SkillTreeGraph";
+import {
+  SkillTreeGraph,
+  computeMainPositions,
+  computeTotalHeight,
+  computeZones,
+  zoneGradient,
+} from "@/components/SkillTreeGraph";
 import { TreeIndex } from "@/components/TreeIndex";
 
 // Same opaque-tint approach as SkillTreeGraph — see the note there.
@@ -92,6 +98,15 @@ export function SkillTree({
   const mainSectionGroups = groupBySection(mainNodes);
   const sections = uniqueSectionsInOrder(mainNodes);
 
+  // Computed here (not inside SkillTreeGraph) specifically so the section
+  // backdrop can span the *whole* lg: row — index sidebar included — rather
+  // than being confined to the graph's own narrower flex-1 column, which is
+  // what made it read as having margins on both sides.
+  const mainPositions = computeMainPositions(mainNodes);
+  const totalHeight = computeTotalHeight(mainNodes.length);
+  const zones = computeZones(mainPositions, totalHeight);
+  const backdrop = zoneGradient(zones, totalHeight);
+
   return (
     <>
       <div className="grid w-full max-w-3xl grid-cols-1 gap-8 lg:hidden">
@@ -123,7 +138,11 @@ export function SkillTree({
         </section>
       </div>
 
-      <div className="hidden w-full max-w-5xl gap-6 lg:flex">
+      <div className="relative hidden w-full max-w-5xl gap-6 lg:flex">
+        <div
+          className="absolute inset-x-0 top-0 z-0"
+          style={{ height: totalHeight, backgroundImage: backdrop }}
+        />
         <TreeIndex sections={sections} />
         <div className="min-w-0 flex-1">
           <SkillTreeGraph

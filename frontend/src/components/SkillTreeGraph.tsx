@@ -55,13 +55,29 @@ const VERTICAL_TRIM = 32;
 const MAIN_CARD_X_TRIM = 10.5;
 const SIDE_CARD_X_TRIM = 8;
 
-type Position = { node: SkillNode; x: number; y: number };
-type Zone = { section: string; top: number; bottom: number };
+export type Position = { node: SkillNode; x: number; y: number };
+export type Zone = { section: string; top: number; bottom: number };
+
+/** Same maths SkillTreeGraph uses internally to lay out the main-quest
+ * column, exported so SkillTree.tsx can compute the same totalHeight/zones
+ * for a full-width backdrop that sits *outside* this component's own
+ * (narrower, shares its row with the index sidebar) column. */
+export function computeMainPositions(mainNodes: SkillNode[]): Position[] {
+  return mainNodes.map((node, i) => ({
+    node,
+    x: 50 + (i % 2 === 0 ? -ZIGZAG : ZIGZAG),
+    y: TOP_PAD + i * ROW_HEIGHT,
+  }));
+}
+
+export function computeTotalHeight(mainNodeCount: number): number {
+  return TOP_PAD + Math.max(0, mainNodeCount - 1) * ROW_HEIGHT + BOTTOM_PAD;
+}
 
 /** Bands that tile the full height, split where the section changes — the
  * boundary sits midway between the last node of one section and the first
  * of the next, not glued to either card. */
-function computeZones(mainPositions: Position[], totalHeight: number): Zone[] {
+export function computeZones(mainPositions: Position[], totalHeight: number): Zone[] {
   if (mainPositions.length === 0) return [];
 
   const zones: Zone[] = [];
@@ -88,7 +104,7 @@ function computeZones(mainPositions: Position[], totalHeight: number): Zone[] {
  * background — light or dark — since "transparent" is genuinely transparent,
  * not a hardcoded colour.
  */
-function zoneGradient(zones: Zone[], totalHeight: number): string {
+export function zoneGradient(zones: Zone[], totalHeight: number): string {
   if (zones.length === 0 || totalHeight === 0) return "none";
 
   const stops = ["transparent 0%"];
@@ -180,10 +196,11 @@ export function SkillTreeGraph({
 
   return (
     <div className="relative w-full" style={{ height: totalHeight }}>
-      <div
-        className="absolute inset-x-0 top-0 z-0"
-        style={{ height: totalHeight, backgroundImage: zoneGradient(zones, totalHeight) }}
-      />
+      {/* The section-colour backdrop itself lives one level up, in
+          SkillTree.tsx — it needs to span the full row (index sidebar
+          included), not just this component's narrower column. Only the
+          zone labels stay here, since their position is this component's
+          own coordinate math. */}
       {zones.map((zone) => (
         <div
           key={`label-${zone.section}`}
