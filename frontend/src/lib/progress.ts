@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { GATING_EXERCISE_TYPES } from "@/lib/exercises";
 
 export async function recordAttempt({
   exerciseId,
@@ -27,10 +28,11 @@ export async function recordAttempt({
 }
 
 /**
- * A node becomes 'completed' once every one of its `code` exercises has at
- * least one 'passed' attempt — flashcards/recall don't gate progression,
+ * A node becomes 'completed' once every one of its "gating" exercises
+ * (everything except flashcard/recall — see GATING_EXERCISE_TYPES) has at
+ * least one 'passed' attempt. Flashcards/recall don't gate progression,
  * they're for ongoing review, not a one-time pass/fail (confirmed with the
- * project owner). A node with no `code` exercises at all never
+ * project owner). A node with no gating exercises at all never
  * auto-completes through this path.
  */
 export async function recomputeNodeStatus(nodeId: string) {
@@ -40,28 +42,28 @@ export async function recomputeNodeStatus(nodeId: string) {
   } = await supabase.auth.getUser();
   if (!user) return;
 
-  const { data: codeExercises } = await supabase
+  const { data: gatingExercises } = await supabase
     .from("exercises")
     .select("id")
     .eq("node_id", nodeId)
-    .eq("type", "code");
+    .in("type", GATING_EXERCISE_TYPES);
 
-  const codeExerciseIds = (codeExercises ?? []).map((e) => e.id);
-  let allCodePassed = false;
+  const gatingExerciseIds = (gatingExercises ?? []).map((e) => e.id);
+  let allGatingPassed = false;
 
-  if (codeExerciseIds.length > 0) {
+  if (gatingExerciseIds.length > 0) {
     const { data: passedAttempts } = await supabase
       .from("exercise_attempts")
       .select("exercise_id")
       .eq("user_id", user.id)
       .eq("status", "passed")
-      .in("exercise_id", codeExerciseIds);
+      .in("exercise_id", gatingExerciseIds);
 
     const passedIds = new Set((passedAttempts ?? []).map((a) => a.exercise_id));
-    allCodePassed = codeExerciseIds.every((id) => passedIds.has(id));
+    allGatingPassed = gatingExerciseIds.every((id) => passedIds.has(id));
   }
 
-  const nextStatus = allCodePassed ? "completed" : "in_progress";
+  const nextStatus = allGatingPassed ? "completed" : "in_progress";
 
   await supabase.from("user_node_progress").upsert(
     {

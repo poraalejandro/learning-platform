@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import type { CodeContent, Exercise } from "@/lib/exercises";
+import type { CodeContent, Exercise, MatchContent, ParsonsContent, PredictOutputContent } from "@/lib/exercises";
 import { CodeExercise } from "@/components/CodeExercise";
+import { PredictOutputExercise } from "@/components/PredictOutputExercise";
+import { MatchExercise } from "@/components/MatchExercise";
+import { ParsonsExercise } from "@/components/ParsonsExercise";
 
 export default async function ExercisePage({
   params,
@@ -40,13 +43,24 @@ export default async function ExercisePage({
         ← Volver a los ejercicios
       </Link>
 
-      {typedExercise.type === "code" && (
+      {/* fix_bug reuses CodeExercise as-is: same content shape (starter_code
+          just happens to be broken instead of a stub), same editor + test
+          runner. */}
+      {(typedExercise.type === "code" || typedExercise.type === "fix_bug") && (
         <CodeExercise exerciseId={exerciseId} nodeId={nodeId} content={typedExercise.content as CodeContent} />
       )}
-      {!["code", "flashcard", "recall"].includes(typedExercise.type) && (
-        <p className="text-zinc-500">
-          El tipo &quot;{typedExercise.type}&quot; todavía no tiene motor — llega en la Fase 4.
-        </p>
+      {typedExercise.type === "predict_output" && (
+        <PredictOutputExercise
+          exerciseId={exerciseId}
+          nodeId={nodeId}
+          content={typedExercise.content as PredictOutputContent}
+        />
+      )}
+      {typedExercise.type === "match" && (
+        <MatchExercise exerciseId={exerciseId} nodeId={nodeId} content={typedExercise.content as MatchContent} />
+      )}
+      {typedExercise.type === "parsons" && (
+        <ParsonsExercise exerciseId={exerciseId} nodeId={nodeId} content={typedExercise.content as ParsonsContent} />
       )}
     </main>
   );

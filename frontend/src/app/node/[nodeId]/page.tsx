@@ -2,7 +2,17 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { computeNodeStatuses, type SkillNode } from "@/lib/skillTree";
-import type { Exercise } from "@/lib/exercises";
+import { GATING_EXERCISE_TYPES, type Exercise, type ExerciseType } from "@/lib/exercises";
+
+const TYPE_LABEL: Record<ExerciseType, string> = {
+  code: "Código",
+  fix_bug: "Arregla el bug",
+  predict_output: "Predice la salida",
+  match: "Emparejar",
+  parsons: "Ordenar líneas",
+  flashcard: "Flashcard",
+  recall: "Recall",
+};
 
 export default async function NodePage({ params }: { params: Promise<{ nodeId: string }> }) {
   const { nodeId } = await params;
@@ -33,19 +43,19 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
   if (statuses.get(nodeId) === "locked") redirect("/");
 
   const typedExercises = (exercises ?? []) as Exercise[];
-  const codeExercises = typedExercises.filter((e) => e.type === "code");
+  const gatingExercises = typedExercises.filter((e) => GATING_EXERCISE_TYPES.includes(e.type));
   const reviewExercises = typedExercises.filter((e) => e.type === "flashcard" || e.type === "recall");
-  const codeExerciseIds = codeExercises.map((e) => e.id);
+  const gatingExerciseIds = gatingExercises.map((e) => e.id);
   const allExerciseIds = typedExercises.map((e) => e.id);
 
   const [{ data: passedAttempts }, { data: srsCards }] = await Promise.all([
-    codeExerciseIds.length
+    gatingExerciseIds.length
       ? supabase
           .from("exercise_attempts")
           .select("exercise_id")
           .eq("user_id", user.id)
           .eq("status", "passed")
-          .in("exercise_id", codeExerciseIds)
+          .in("exercise_id", gatingExerciseIds)
       : Promise.resolve({ data: [] }),
     allExerciseIds.length
       ? supabase
@@ -65,11 +75,11 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
     return !card || card.due_date <= today;
   }).length;
 
-  // A code exercise only gets an srs_cards row via flagIfStruggling (see
+  // A gating exercise only gets an srs_cards row via flagIfStruggling (see
   // lib/mistakes.ts) — reveal a solution, or fail twice — so its mere
   // presence here means "this one needs another look," not just "seen
   // before." Due-date filtering still applies once it's been reviewed once.
-  function codeExerciseBadge(exerciseId: string) {
+  function gatingExerciseBadge(exerciseId: string) {
     const card = cardsByExercise.get(exerciseId);
     if (card && card.due_date <= today) return "🔁 Repasar";
     return passedIds.has(exerciseId) ? "✅ Hecho" : "⬜ Pendiente";
@@ -98,17 +108,19 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
           </Link>
         )}
 
-        {codeExercises.map((exercise) => (
+        {gatingExercises.map((exercise) => (
           <Link
             key={exercise.id}
             href={`/node/${nodeId}/exercise/${exercise.id}`}
             className="flex items-center justify-between rounded-lg border px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-900"
           >
             <span>
-              <span className="mr-2 rounded bg-zinc-100 px-2 py-0.5 text-xs dark:bg-zinc-800">Código</span>
+              <span className="mr-2 rounded bg-zinc-100 px-2 py-0.5 text-xs dark:bg-zinc-800">
+                {TYPE_LABEL[exercise.type]}
+              </span>
               Ejercicio {exercise.position}
             </span>
-            <span className="text-sm">{codeExerciseBadge(exercise.id)}</span>
+            <span className="text-sm">{gatingExerciseBadge(exercise.id)}</span>
           </Link>
         ))}
       </div>
