@@ -1,5 +1,14 @@
 import Link from "next/link";
 import type { NodeStatus, SkillNode } from "@/lib/skillTree";
+import { sectionLabel } from "@/lib/sections";
+
+// Faint, distinct per section — these are large background bands, so they
+// have to stay quiet enough not to compete with node status colours.
+const ZONE_STYLES: Record<string, string> = {
+  python: "bg-primary/[6%]",
+  genai: "bg-accent/[8%]",
+  project: "bg-success/[6%]",
+};
 
 // Opaque tints (status colour mixed into the surface), not alpha washes:
 // the nodes sit on top of the connector lines, so a translucent card let
@@ -43,6 +52,29 @@ const MAIN_CARD_X_TRIM = 10.5;
 const SIDE_CARD_X_TRIM = 8;
 
 type Position = { node: SkillNode; x: number; y: number };
+type Zone = { section: string; top: number; bottom: number };
+
+/** Bands that tile the full height, split where the section changes — the
+ * boundary sits midway between the last node of one section and the first
+ * of the next, not glued to either card. */
+function computeZones(mainPositions: Position[], totalHeight: number): Zone[] {
+  if (mainPositions.length === 0) return [];
+
+  const zones: Zone[] = [];
+  let currentSection = mainPositions[0].node.section;
+  let zoneStart = 0;
+
+  for (let i = 1; i < mainPositions.length; i++) {
+    if (mainPositions[i].node.section !== currentSection) {
+      const boundary = (mainPositions[i - 1].y + mainPositions[i].y) / 2;
+      zones.push({ section: currentSection, top: zoneStart, bottom: boundary });
+      currentSection = mainPositions[i].node.section;
+      zoneStart = boundary;
+    }
+  }
+  zones.push({ section: currentSection, top: zoneStart, bottom: totalHeight });
+  return zones;
+}
 
 function GraphNode({
   position,
@@ -118,13 +150,32 @@ export function SkillTreeGraph({
   });
 
   const totalHeight = TOP_PAD + Math.max(0, mainNodes.length - 1) * ROW_HEIGHT + BOTTOM_PAD;
+  const zones = computeZones(mainPositions, totalHeight);
 
   return (
     <div className="relative w-full" style={{ height: totalHeight }}>
+      {zones.map((zone) => (
+        <div
+          key={`zone-${zone.section}`}
+          className={`absolute inset-x-0 z-0 ${ZONE_STYLES[zone.section] ?? "bg-surface-2/40"}`}
+          style={{ top: zone.top, height: zone.bottom - zone.top }}
+        />
+      ))}
+      {zones.map((zone) => (
+        <div
+          key={`label-${zone.section}`}
+          id={`section-${zone.section}`}
+          className="absolute left-2 z-[3] scroll-mt-24 text-xs font-semibold tracking-wide text-muted uppercase"
+          style={{ top: zone.top + 10 }}
+        >
+          {sectionLabel(zone.section)}
+        </div>
+      ))}
+
       <svg
         viewBox={`0 0 100 ${totalHeight}`}
         preserveAspectRatio="none"
-        className="absolute inset-0 z-0 h-full w-full"
+        className="absolute inset-0 z-[2] h-full w-full"
       >
         {mainPositions.slice(0, -1).map((from, i) => {
           const to = mainPositions[i + 1];

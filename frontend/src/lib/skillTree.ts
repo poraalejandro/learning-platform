@@ -6,6 +6,7 @@ export type SkillNode = {
   description: string | null;
   track: "main" | "side";
   position: number;
+  section: string;
 };
 
 type Prerequisite = { node_id: string; requires_node_id: string };
