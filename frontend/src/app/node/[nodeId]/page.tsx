@@ -35,8 +35,8 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
   const typedExercises = (exercises ?? []) as Exercise[];
   const codeExercises = typedExercises.filter((e) => e.type === "code");
   const reviewExercises = typedExercises.filter((e) => e.type === "flashcard" || e.type === "recall");
-  const reviewExerciseIds = reviewExercises.map((e) => e.id);
   const codeExerciseIds = codeExercises.map((e) => e.id);
+  const allExerciseIds = typedExercises.map((e) => e.id);
 
   const [{ data: passedAttempts }, { data: srsCards }] = await Promise.all([
     codeExerciseIds.length
@@ -47,12 +47,12 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
           .eq("status", "passed")
           .in("exercise_id", codeExerciseIds)
       : Promise.resolve({ data: [] }),
-    reviewExerciseIds.length
+    allExerciseIds.length
       ? supabase
           .from("srs_cards")
           .select("exercise_id, reps, due_date")
           .eq("user_id", user.id)
-          .in("exercise_id", reviewExerciseIds)
+          .in("exercise_id", allExerciseIds)
       : Promise.resolve({ data: [] }),
   ]);
 
@@ -64,6 +64,16 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
     const card = cardsByExercise.get(e.id);
     return !card || card.due_date <= today;
   }).length;
+
+  // A code exercise only gets an srs_cards row via flagIfStruggling (see
+  // lib/mistakes.ts) — reveal a solution, or fail twice — so its mere
+  // presence here means "this one needs another look," not just "seen
+  // before." Due-date filtering still applies once it's been reviewed once.
+  function codeExerciseBadge(exerciseId: string) {
+    const card = cardsByExercise.get(exerciseId);
+    if (card && card.due_date <= today) return "🔁 Repasar";
+    return passedIds.has(exerciseId) ? "✅ Hecho" : "⬜ Pendiente";
+  }
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6 py-10">
@@ -98,7 +108,7 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
               <span className="mr-2 rounded bg-zinc-100 px-2 py-0.5 text-xs dark:bg-zinc-800">Código</span>
               Ejercicio {exercise.position}
             </span>
-            <span className="text-sm">{passedIds.has(exercise.id) ? "✅ Hecho" : "⬜ Pendiente"}</span>
+            <span className="text-sm">{codeExerciseBadge(exercise.id)}</span>
           </Link>
         ))}
       </div>

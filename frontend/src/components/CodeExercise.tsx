@@ -5,6 +5,7 @@ import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
 import { runTests, type TestResult } from "@/lib/pyodide";
 import { recordAttempt, recomputeNodeStatus } from "@/lib/progress";
+import { flagIfStruggling, maybeAdvanceOnRetry } from "@/lib/mistakes";
 import { requestHint, TutorError } from "@/lib/tutor";
 import type { CodeContent } from "@/lib/exercises";
 
@@ -68,7 +69,12 @@ export function CodeExercise({
         submittedCode: code,
         hintsUsed: hintLevel,
       });
-      if (allPassed) await recomputeNodeStatus(nodeId);
+      if (allPassed) {
+        await recomputeNodeStatus(nodeId);
+        await maybeAdvanceOnRetry(exerciseId);
+      } else {
+        await flagIfStruggling(exerciseId, "failed");
+      }
     } finally {
       setRunning(false);
     }
@@ -99,6 +105,7 @@ export function CodeExercise({
   async function handleRevealSolution() {
     setShowSolution(true);
     await recordAttempt({ exerciseId, status: "revealed", submittedCode: code, hintsUsed: hintLevel });
+    await flagIfStruggling(exerciseId, "revealed");
   }
 
   return (
