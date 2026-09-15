@@ -1,7 +1,14 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import type { CodeContent, Exercise, MatchContent, ParsonsContent, PredictOutputContent } from "@/lib/exercises";
+import {
+  GATING_EXERCISE_TYPES,
+  type CodeContent,
+  type Exercise,
+  type MatchContent,
+  type ParsonsContent,
+  type PredictOutputContent,
+} from "@/lib/exercises";
 import { CodeExercise } from "@/components/CodeExercise";
 import { PredictOutputExercise } from "@/components/PredictOutputExercise";
 import { MatchExercise } from "@/components/MatchExercise";
@@ -37,6 +44,30 @@ export default async function ExercisePage({
     redirect(`/node/${nodeId}/review`);
   }
 
+  // Where "Siguiente ejercicio" goes once this one is solved: the next
+  // exercise in this node the user hasn't passed yet, wrapping back to the
+  // start if the remaining ones are behind the current position. Null means
+  // there's nothing left to do in this node.
+  const [{ data: siblings }, { data: passedAttempts }] = await Promise.all([
+    supabase
+      .from("exercises")
+      .select("id, position")
+      .eq("node_id", nodeId)
+      .in("type", GATING_EXERCISE_TYPES)
+      .order("position"),
+    supabase
+      .from("exercise_attempts")
+      .select("exercise_id")
+      .eq("user_id", user.id)
+      .eq("status", "passed"),
+  ]);
+
+  const passedIds = new Set((passedAttempts ?? []).map((a) => a.exercise_id));
+  const pending = (siblings ?? []).filter((e) => e.id !== exerciseId && !passedIds.has(e.id));
+  const nextExercise =
+    pending.find((e) => e.position > typedExercise.position) ?? pending[0] ?? null;
+  const nextHref = nextExercise ? `/node/${nodeId}/exercise/${nextExercise.id}` : null;
+
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6 py-10">
       <Link href={`/node/${nodeId}`} className="text-sm text-primary underline transition-opacity hover:opacity-75">
@@ -47,20 +78,36 @@ export default async function ExercisePage({
           just happens to be broken instead of a stub), same editor + test
           runner. */}
       {(typedExercise.type === "code" || typedExercise.type === "fix_bug") && (
-        <CodeExercise exerciseId={exerciseId} nodeId={nodeId} content={typedExercise.content as CodeContent} />
+        <CodeExercise
+          exerciseId={exerciseId}
+          nodeId={nodeId}
+          nextHref={nextHref}
+          content={typedExercise.content as CodeContent}
+        />
       )}
       {typedExercise.type === "predict_output" && (
         <PredictOutputExercise
           exerciseId={exerciseId}
           nodeId={nodeId}
+          nextHref={nextHref}
           content={typedExercise.content as PredictOutputContent}
         />
       )}
       {typedExercise.type === "match" && (
-        <MatchExercise exerciseId={exerciseId} nodeId={nodeId} content={typedExercise.content as MatchContent} />
+        <MatchExercise
+          exerciseId={exerciseId}
+          nodeId={nodeId}
+          nextHref={nextHref}
+          content={typedExercise.content as MatchContent}
+        />
       )}
       {typedExercise.type === "parsons" && (
-        <ParsonsExercise exerciseId={exerciseId} nodeId={nodeId} content={typedExercise.content as ParsonsContent} />
+        <ParsonsExercise
+          exerciseId={exerciseId}
+          nodeId={nodeId}
+          nextHref={nextHref}
+          content={typedExercise.content as ParsonsContent}
+        />
       )}
     </main>
   );

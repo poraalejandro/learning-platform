@@ -5,6 +5,7 @@ import { recordAttempt, recomputeNodeStatus } from "@/lib/progress";
 import { flagIfStruggling, maybeAdvanceOnRetry } from "@/lib/mistakes";
 import { celebrate } from "@/lib/confetti";
 import type { MatchContent } from "@/lib/exercises";
+import { NextExerciseLink } from "@/components/NextExerciseLink";
 
 function shuffle<T>(items: T[]): T[] {
   const copy = [...items];
@@ -18,10 +19,12 @@ function shuffle<T>(items: T[]): T[] {
 export function MatchExercise({
   exerciseId,
   nodeId,
+  nextHref,
   content,
 }: {
   exerciseId: string;
   nodeId: string;
+  nextHref: string | null;
   content: MatchContent;
 }) {
   // Shuffled once per mount, not on every render — recomputing on each
@@ -113,9 +116,12 @@ export function MatchExercise({
       </div>
 
       {done && (
-        <p className="animate-pop-in font-medium text-green-600 dark:text-green-400">
-          ✅ ¡Todo emparejado correctamente! Progreso guardado.
-        </p>
+        <>
+          <p className="animate-pop-in font-medium text-green-600 dark:text-green-400">
+            ✅ ¡Todo emparejado correctamente! Progreso guardado.
+          </p>
+          <NextExerciseLink nodeId={nodeId} nextHref={nextHref} />
+        </>
       )}
     </div>
   );

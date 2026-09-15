@@ -5,14 +5,17 @@ import { recordAttempt, recomputeNodeStatus } from "@/lib/progress";
 import { flagIfStruggling, maybeAdvanceOnRetry } from "@/lib/mistakes";
 import { celebrate } from "@/lib/confetti";
 import type { PredictOutputContent } from "@/lib/exercises";
+import { NextExerciseLink } from "@/components/NextExerciseLink";
 
 export function PredictOutputExercise({
   exerciseId,
   nodeId,
+  nextHref,
   content,
 }: {
   exerciseId: string;
   nodeId: string;
+  nextHref: string | null;
   content: PredictOutputContent;
 }) {
   const [prediction, setPrediction] = useState("");
@@ -74,6 +77,8 @@ export function PredictOutputExercise({
           {content.explanation && <p className="mt-1 text-muted">{content.explanation}</p>}
         </div>
       )}
+
+      {correct && <NextExerciseLink nodeId={nodeId} nextHref={nextHref} />}
     </div>
   );
 }

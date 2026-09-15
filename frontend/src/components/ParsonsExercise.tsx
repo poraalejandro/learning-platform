@@ -5,6 +5,7 @@ import { recordAttempt, recomputeNodeStatus } from "@/lib/progress";
 import { flagIfStruggling, maybeAdvanceOnRetry } from "@/lib/mistakes";
 import { celebrate } from "@/lib/confetti";
 import type { ParsonsContent } from "@/lib/exercises";
+import { NextExerciseLink } from "@/components/NextExerciseLink";
 
 function shuffle<T>(items: T[]): T[] {
   const copy = [...items];
@@ -18,10 +19,12 @@ function shuffle<T>(items: T[]): T[] {
 export function ParsonsExercise({
   exerciseId,
   nodeId,
+  nextHref,
   content,
 }: {
   exerciseId: string;
   nodeId: string;
+  nextHref: string | null;
   content: ParsonsContent;
 }) {
   // Reordered with up/down buttons rather than drag-and-drop: native HTML5
@@ -117,6 +120,8 @@ export function ParsonsExercise({
           {checked ? "✅ ¡Orden correcto! Progreso guardado." : "❌ Todavía no es el orden correcto."}
         </p>
       )}
+
+      {checked === true && <NextExerciseLink nodeId={nodeId} nextHref={nextHref} />}
     </div>
   );
 }

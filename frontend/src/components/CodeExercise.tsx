@@ -9,6 +9,7 @@ import { flagIfStruggling, maybeAdvanceOnRetry } from "@/lib/mistakes";
 import { requestHint, TutorError } from "@/lib/tutor";
 import { celebrate } from "@/lib/confetti";
 import type { CodeContent } from "@/lib/exercises";
+import { NextExerciseLink } from "@/components/NextExerciseLink";
 
 const MAX_HINT_LEVEL = 3;
 
@@ -29,10 +30,12 @@ function getServerColorScheme(): "light" | "dark" {
 export function CodeExercise({
   exerciseId,
   nodeId,
+  nextHref,
   content,
 }: {
   exerciseId: string;
   nodeId: string;
+  nextHref: string | null;
   content: CodeContent;
 }) {
   const [code, setCode] = useState(content.starter_code);
@@ -174,9 +177,12 @@ export function CodeExercise({
       )}
 
       {passed && (
-        <p className="animate-pop-in font-medium text-green-600 dark:text-green-400">
-          ✅ ¡Correcto! Progreso guardado.
-        </p>
+        <>
+          <p className="animate-pop-in font-medium text-green-600 dark:text-green-400">
+            ✅ ¡Correcto! Progreso guardado.
+          </p>
+          <NextExerciseLink nodeId={nodeId} nextHref={nextHref} />
+        </>
       )}
 
       {showSolution && (
