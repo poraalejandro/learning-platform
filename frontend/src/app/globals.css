@@ -167,6 +167,23 @@
   animation: draw-line 0.9s ease-out both;
 }
 
+/* A short lit segment travelling the whole connector, forever. Same
+   pathLength="1" trick, so "0.14 0.86" is 14% of the line lit regardless
+   of how long that particular connector actually is. */
+@keyframes flow-line {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-flow-line {
+  stroke-dasharray: 0.14 0.86;
+  animation: flow-line 2.6s linear infinite;
+}
+
 @keyframes shake {
   0%,
   100% {
@@ -190,7 +207,14 @@
   .animate-pop-in,
   .animate-rise-in,
   .animate-draw-line,
+  .animate-flow-line,
   .animate-shake {
     animation: none !important;
+  }
+
+  /* The looping pulse is decorative; with motion reduced the connector
+     should just read as a solid completed line, not a frozen dash. */
+  .animate-flow-line {
+    display: none;
   }
 }

@@ -144,18 +144,33 @@ export function SkillTreeGraph({
           const span = endY - startY;
           const d = `M ${startX} ${startY} C ${startX} ${startY + span * 0.5}, ${endX} ${endY - span * 0.5}, ${endX} ${endY}`;
 
+          // A completed connector is drawn twice: the solid track, plus a
+          // lit segment looping along it so the path reads as live rather
+          // than as a line that animated once on load and then died.
           return (
-            <path
-              key={`main-${from.node.id}`}
-              d={d}
-              fill="none"
-              pathLength={1}
-              strokeWidth={2}
-              strokeLinecap="round"
-              className={walked ? "animate-draw-line stroke-success" : "stroke-border"}
-              strokeDasharray={walked ? undefined : "0.03 0.03"}
-              vectorEffect="non-scaling-stroke"
-            />
+            <g key={`main-${from.node.id}`}>
+              <path
+                d={d}
+                fill="none"
+                pathLength={1}
+                strokeWidth={2}
+                strokeLinecap="round"
+                className={walked ? "stroke-success/45" : "stroke-border"}
+                strokeDasharray={walked ? undefined : "0.03 0.03"}
+                vectorEffect="non-scaling-stroke"
+              />
+              {walked && (
+                <path
+                  d={d}
+                  fill="none"
+                  pathLength={1}
+                  strokeWidth={3}
+                  strokeLinecap="round"
+                  className="animate-flow-line stroke-success"
+                  vectorEffect="non-scaling-stroke"
+                />
+              )}
+            </g>
           );
         })}
         {sidePositions.map(({ node, x, y, parent }) => {
@@ -168,19 +183,33 @@ export function SkillTreeGraph({
           const endX = x - SIDE_CARD_X_TRIM;
 
           return (
-            <line
-              key={`side-${node.id}`}
-              x1={startX}
-              y1={parent.y}
-              x2={endX}
-              y2={y}
-              pathLength={1}
-              strokeWidth={2}
-              strokeLinecap="round"
-              className={walked ? "animate-draw-line stroke-success" : "stroke-border"}
-              strokeDasharray={walked ? undefined : "0.03 0.03"}
-              vectorEffect="non-scaling-stroke"
-            />
+            <g key={`side-${node.id}`}>
+              <line
+                x1={startX}
+                y1={parent.y}
+                x2={endX}
+                y2={y}
+                pathLength={1}
+                strokeWidth={2}
+                strokeLinecap="round"
+                className={walked ? "stroke-success/45" : "stroke-border"}
+                strokeDasharray={walked ? undefined : "0.03 0.03"}
+                vectorEffect="non-scaling-stroke"
+              />
+              {walked && (
+                <line
+                  x1={startX}
+                  y1={parent.y}
+                  x2={endX}
+                  y2={y}
+                  pathLength={1}
+                  strokeWidth={3}
+                  strokeLinecap="round"
+                  className="animate-flow-line stroke-success"
+                  vectorEffect="non-scaling-stroke"
+                />
+              )}
+            </g>
           );
         })}
       </svg>
