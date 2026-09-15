@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { updateCard, type Rating, type SrsCard } from "./sm2";
-import { recordAttempt } from "./progress";
+import { recordAttempt, recomputeNodeStatus } from "./progress";
 
 export async function getOrCreateCard(exerciseId: string): Promise<SrsCard> {
   const supabase = createClient();
@@ -35,4 +35,14 @@ export async function rateCard(exerciseId: string, current: SrsCard, rating: Rat
   );
 
   await recordAttempt({ exerciseId, status: rating === "again" ? "failed" : "passed" });
+
+  // Reviewing a card is real work in that node, so keep its stored progress
+  // row in step too — otherwise a node where you've only done flashcards
+  // never gets one, and reads as untouched rather than started.
+  const { data: exercise } = await supabase
+    .from("exercises")
+    .select("node_id")
+    .eq("id", exerciseId)
+    .single();
+  if (exercise) await recomputeNodeStatus(exercise.node_id);
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { computeNodeStatuses, type SkillNode } from "@/lib/skillTree";
+import { fetchTreeProgress } from "@/lib/treeProgress";
 import { GATING_EXERCISE_TYPES, type Exercise, type ExerciseType } from "@/lib/exercises";
 
 const TYPE_LABEL: Record<ExerciseType, string> = {
@@ -22,11 +23,11 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: nodes }, { data: prerequisites }, { data: progress }, { data: exercises }] =
+  const [{ data: nodes }, { data: prerequisites }, treeProgress, { data: exercises }] =
     await Promise.all([
       supabase.from("skill_nodes").select("*"),
       supabase.from("skill_prerequisites").select("*"),
-      supabase.from("user_node_progress").select("node_id, status").eq("user_id", user.id),
+      fetchTreeProgress(user.id),
       supabase
         .from("exercises")
         .select("id, node_id, type, position, content")
@@ -39,7 +40,7 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
 
   // Same calculation the tree page uses — re-derived here, not trusted from
   // a query param, so a direct link to a locked node can't bypass it.
-  const statuses = computeNodeStatuses((nodes ?? []) as SkillNode[], prerequisites ?? [], progress ?? []);
+  const statuses = computeNodeStatuses((nodes ?? []) as SkillNode[], prerequisites ?? [], treeProgress);
   if (statuses.get(nodeId) === "locked") redirect("/");
 
   const typedExercises = (exercises ?? []) as Exercise[];

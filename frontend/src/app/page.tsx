@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { computeNodeStatuses, type SkillNode } from "@/lib/skillTree";
+import { fetchTreeProgress } from "@/lib/treeProgress";
 import { SkillTree } from "@/components/SkillTree";
 import { signOut } from "./actions";
 
@@ -30,10 +31,10 @@ export default async function Home() {
     );
   }
 
-  const [{ data: nodes }, { data: prerequisites }, { data: progress }] = await Promise.all([
+  const [{ data: nodes }, { data: prerequisites }, treeProgress] = await Promise.all([
     supabase.from("skill_nodes").select("*").order("track").order("position"),
     supabase.from("skill_prerequisites").select("*"),
-    supabase.from("user_node_progress").select("node_id, status").eq("user_id", user.id),
+    fetchTreeProgress(user.id),
   ]);
 
   const allNodes = (nodes ?? []) as SkillNode[];
@@ -41,7 +42,7 @@ export default async function Home() {
   const sideNodes = allNodes.filter((n) => n.track === "side");
   const nodesById = new Map(allNodes.map((n) => [n.id, n]));
 
-  const statuses = computeNodeStatuses(allNodes, prerequisites ?? [], progress ?? []);
+  const statuses = computeNodeStatuses(allNodes, prerequisites ?? [], treeProgress);
 
   const sideUnlockTitles = new Map<string, string>();
   const sideParentId = new Map<string, string>();
