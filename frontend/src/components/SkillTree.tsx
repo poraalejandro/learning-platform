@@ -99,9 +99,9 @@ export function SkillTree({
   const sections = uniqueSectionsInOrder(mainNodes);
 
   // Computed here (not inside SkillTreeGraph) specifically so the section
-  // backdrop can span the *whole* lg: row — index sidebar included — rather
-  // than being confined to the graph's own narrower flex-1 column, which is
-  // what made it read as having margins on both sides.
+  // backdrop can be rendered on its own full-bleed element, independent of
+  // the centred, max-w-5xl content row it sits behind — the graph's own
+  // column (or even that whole row) was too narrow to call it immersive.
   const mainPositions = computeMainPositions(mainNodes);
   const totalHeight = computeTotalHeight(mainNodes.length);
   const zones = computeZones(mainPositions, totalHeight);
@@ -138,20 +138,25 @@ export function SkillTree({
         </section>
       </div>
 
-      <div className="relative hidden w-full max-w-5xl gap-6 lg:flex">
+      {/* Full-bleed wrapper: unlike the content row inside it, this has no
+          max-w, so the backdrop it holds reaches the actual viewport edge
+          instead of stopping at the row's own 5xl cap. */}
+      <div className="relative hidden w-full lg:block">
         <div
           className="absolute inset-x-0 top-0 z-0"
           style={{ height: totalHeight, backgroundImage: backdrop }}
         />
-        <TreeIndex sections={sections} />
-        <div className="min-w-0 flex-1">
-          <SkillTreeGraph
-            mainNodes={mainNodes}
-            sideNodes={sideNodes}
-            statuses={statuses}
-            sideUnlockTitles={sideUnlockTitles}
-            sideParentId={sideParentId}
-          />
+        <div className="relative z-[1] mx-auto flex w-full max-w-5xl gap-6 px-6">
+          <TreeIndex sections={sections} />
+          <div className="min-w-0 flex-1">
+            <SkillTreeGraph
+              mainNodes={mainNodes}
+              sideNodes={sideNodes}
+              statuses={statuses}
+              sideUnlockTitles={sideUnlockTitles}
+              sideParentId={sideParentId}
+            />
+          </div>
         </div>
       </div>
     </>

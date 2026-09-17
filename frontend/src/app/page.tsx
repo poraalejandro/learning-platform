@@ -60,8 +60,11 @@ export default async function Home() {
     <>
       <Navbar userEmail={user.email ?? ""} active="tree" />
 
-      <main className="flex flex-col items-center gap-8 px-6 py-10">
-        <div className="animate-rise-in flex w-full max-w-5xl flex-wrap items-end justify-between gap-3">
+      {/* No horizontal padding at lg: — SkillTree's section backdrop needs to
+          reach the true viewport edge there. Below lg: (no backdrop rendered)
+          this still supplies the padding every child relies on. */}
+      <main className="flex flex-col items-center gap-8 px-6 py-10 lg:px-0">
+        <div className="animate-rise-in flex w-full max-w-5xl flex-wrap items-end justify-between gap-3 lg:px-6">
           <div>
             <h1 className="text-2xl font-semibold">Tu ruta</h1>
             <p className="mt-1 text-sm text-muted">
