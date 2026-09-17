@@ -12,10 +12,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Placeholder identity: the real product name is still an open decision
-// (see docs/backlog.md) — this just stops the tab saying "Create Next App".
 export const metadata: Metadata = {
-  title: "learning-platform",
+  title: "PyQuest",
   description: "Aprende Python e ingeniería de IA con práctica activa y repetición espaciada.",
 };
 

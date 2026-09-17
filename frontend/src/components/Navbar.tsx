@@ -23,7 +23,7 @@ export function Navbar({ userEmail, active }: { userEmail: string; active: NavKe
             <span className="text-xl" aria-hidden>
               🐍
             </span>
-            <span className="hidden text-base font-semibold sm:inline">learning-platform</span>
+            <span className="hidden text-base font-semibold sm:inline">PyQuest</span>
           </Link>
 
           <nav className="flex items-center gap-1">

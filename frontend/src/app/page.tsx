@@ -17,7 +17,7 @@ export default async function Home() {
         <span className="text-4xl" aria-hidden>
           🐍
         </span>
-        <h1 className="text-3xl font-semibold">learning-platform</h1>
+        <h1 className="text-3xl font-semibold">PyQuest</h1>
         <p className="max-w-sm text-muted">
           Aprende Python e ingeniería de IA resolviendo ejercicios, no leyendo lecciones.
         </p>

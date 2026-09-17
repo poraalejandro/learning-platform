@@ -24,7 +24,7 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: nodes }, { data: prerequisites }, treeProgress, { data: exercises }] =
+  const [{ data: nodes }, { data: prerequisites }, treeProgress, { data: exercises }, { data: lessons }] =
     await Promise.all([
       supabase.from("skill_nodes").select("*"),
       supabase.from("skill_prerequisites").select("*"),
@@ -34,6 +34,7 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
         .select("id, node_id, type, position, content")
         .eq("node_id", nodeId)
         .order("position"),
+      supabase.from("lessons").select("id, title").eq("node_id", nodeId).order("position"),
     ]);
 
   const node = (nodes ?? []).find((n) => n.id === nodeId) as SkillNode | undefined;
@@ -98,6 +99,21 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
           <h1 className="mt-2 text-2xl font-semibold">{node.title}</h1>
           {node.description && <p className="text-muted">{node.description}</p>}
         </div>
+
+        {lessons && lessons.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {lessons.map((lesson) => (
+              <Link
+                key={lesson.id}
+                href={`/lessons/${lesson.id}`}
+                className="flex items-center justify-between rounded-xl border border-accent/45 bg-accent/10 px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
+              >
+                <span className="font-medium">📖 {lesson.title}</span>
+                <span className="text-muted">→</span>
+              </Link>
+            ))}
+          </div>
+        )}
 
         <div className="flex flex-col gap-2">
           {reviewExercises.length > 0 && (
