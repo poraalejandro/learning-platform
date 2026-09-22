@@ -6,7 +6,7 @@ import { getExercisePrompt, type Exercise, type ExerciseType } from "@/lib/exerc
 import type { Lesson } from "@/lib/lessons";
 import { matchExercise, matchText } from "@/lib/search";
 import { sectionLabel, uniqueSectionsInOrder } from "@/lib/sections";
-import { PYTHON_GLOSSARY, PYTHON_GLOSSARY_URL } from "@/lib/pythonGlossary";
+import { PYTHON_GLOSSARY, PYTHON_GLOSSARY_HOME } from "@/lib/pythonGlossary";
 import { Navbar } from "@/components/Navbar";
 
 const TYPE_LABEL: Record<ExerciseType, string> = {
@@ -56,6 +56,18 @@ export default async function SearchPage({
     list.push(lesson);
     lessonsByNode.set(lesson.node_id, list);
   }
+
+  // Grouped by source and sorted alphabetically within each group — the
+  // glossary is real vocabulary (dictionary-style, A-Z is the right order),
+  // the tutorial section covers real topics from the same table-of-contents
+  // philosophy as the PyQuest tab above, just for Python's own docs instead.
+  const glossaryGroups = [
+    { label: "Glossary terms", entries: PYTHON_GLOSSARY.filter((e) => e.source === "glossary") },
+    { label: "Tutorial topics", entries: PYTHON_GLOSSARY.filter((e) => e.source === "tutorial") },
+  ].map(({ label, entries }) => ({
+    label,
+    entries: [...entries].sort((a, b) => a.term.localeCompare(b.term)),
+  }));
 
   // A table-of-contents-style index (section -> node -> its lessons) so
   // there's something to browse before typing anything, the way a
@@ -208,38 +220,46 @@ export default async function SearchPage({
           </div>
         )}
 
-        {/* Not a copy of Python's glossary — our own one-line descriptions,
-            each linking to the real definition at its exact anchor. Only
-            the concepts we actually teach that map to a real glossary term;
-            see lib/pythonGlossary.ts for why that list is short. */}
+        {/* Not a copy of Python's docs — our own one-line descriptions, each
+            linking to the real definition/section at its exact anchor.
+            Scoped to what PyQuest actually teaches (M1-M4's chapters), not
+            a mirror of the whole tutorial; see lib/pythonGlossary.ts. */}
         {!query && activeTab === "python" && (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-6">
             <p className="text-sm text-muted">
-              Official Python vocabulary behind concepts we teach. Full definitions live on{" "}
+              Python&apos;s own vocabulary and core tutorial topics, scoped to what PyQuest teaches. Full
+              text lives on{" "}
               <a
-                href={PYTHON_GLOSSARY_URL}
+                href={PYTHON_GLOSSARY_HOME}
                 target="_blank"
                 rel="noreferrer"
                 className="text-primary underline underline-offset-2"
               >
                 docs.python.org
               </a>
-              — each entry below links straight to its own term.
+              — each entry below links straight to its own section.
             </p>
-            {PYTHON_GLOSSARY.map((entry) => (
-              <a
-                key={entry.slug}
-                href={`${PYTHON_GLOSSARY_URL}#term-${entry.slug}`}
-                target="_blank"
-                rel="noreferrer"
-                className="flex flex-col gap-1 rounded-xl border bg-surface px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">{entry.term}</span>
-                  <span className="text-xs text-muted">↗ docs.python.org</span>
+            {glossaryGroups.map(({ label, entries }) => (
+              <section key={label} className="flex flex-col gap-2">
+                <h2 className="text-xs font-semibold tracking-wide text-primary uppercase">{label}</h2>
+                <div className="flex flex-col gap-2">
+                  {entries.map((entry) => (
+                    <a
+                      key={entry.url}
+                      href={entry.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex flex-col gap-1 rounded-xl border bg-surface px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium">{entry.term}</span>
+                        <span className="text-xs text-muted">↗ docs.python.org</span>
+                      </div>
+                      <p className="text-sm text-muted">{entry.description}</p>
+                    </a>
+                  ))}
                 </div>
-                <p className="text-sm text-muted">{entry.description}</p>
-              </a>
+              </section>
             ))}
           </div>
         )}
