@@ -49,22 +49,29 @@ export type TestResult = { call: string; expected: string; actual: string; passe
 
 // `call` isn't always a single expression — some exercises use a short
 // multi-statement line like "c = Foo(); c.bar(); c.baz()" to set up state
-// before the value we actually check. __run_call executes every statement
-// but the last, then evaluates the last one as an expression and returns
-// its value — via ast so it's not just naive string-splitting on ';'
-// (which would break on semicolons inside strings/brackets).
+// before the value we actually check, and M5's (async) exercises use `await`
+// inside it (e.g. "await sumar([1, 2, 3])"). __run_call handles both by
+// unparsing the statements back into the body of a generated `async def`
+// (turning the trailing expression into its `return`) and awaiting it —
+// `await` is only legal inside an async function, and wrapping unconditionally
+// means sync and async calls go through one path, not two. Still AST-based,
+// not naive string-splitting on ';' (which would break on semicolons inside
+// strings/brackets).
 const RUN_CALL_HELPER = `
 import ast as __ast
 
-def __run_call(__source):
+async def __run_call(__source):
     __tree = __ast.parse(__source, mode="exec")
+    __body = __tree.body
+    if __body and isinstance(__body[-1], __ast.Expr):
+        __body[-1] = __ast.Return(value=__body[-1].value)
+    if not __body:
+        __body = [__ast.Pass()]
+    __lines = [__line for __stmt in __body for __line in __ast.unparse(__stmt).splitlines()]
+    __src = "async def __wrapped():\\n" + "\\n".join("    " + __line for __line in __lines)
     __g = globals()
-    if __tree.body and isinstance(__tree.body[-1], __ast.Expr):
-        __last = __tree.body.pop()
-        exec(compile(__tree, "<call>", "exec"), __g)
-        return eval(compile(__ast.Expression(__last.value), "<call>", "eval"), __g)
-    exec(compile(__tree, "<call>", "exec"), __g)
-    return None
+    exec(compile(__src, "<call>", "exec"), __g)
+    return await __g["__wrapped"]()
 `;
 
 /**
@@ -89,7 +96,7 @@ export async function runTests(userCode: string, tests: TestCase[]): Promise<Tes
     for (const test of tests) {
       try {
         const actual = (await pyodide.runPythonAsync(
-          `repr(__run_call(${JSON.stringify(test.call)}))`,
+          `repr(await __run_call(${JSON.stringify(test.call)}))`,
           { globals: namespace },
         )) as string;
         results.push({ ...test, actual, passed: actual === test.expected });
