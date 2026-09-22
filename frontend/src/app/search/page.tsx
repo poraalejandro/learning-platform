@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { SkillNode } from "@/lib/skillTree";
-import type { Exercise, ExerciseType } from "@/lib/exercises";
+import { getExercisePrompt, type Exercise, type ExerciseType } from "@/lib/exercises";
 import type { Lesson } from "@/lib/lessons";
 import { matchExercise, matchText } from "@/lib/search";
 import { Navbar } from "@/components/Navbar";
@@ -137,8 +137,8 @@ export default async function SearchPage({
                         </span>
                         <span className="truncate">
                           {kind === "concept"
-                            ? `matched concept in: ${(exercise.content as { prompt?: string }).prompt ?? ""}`
-                            : (exercise.content as { prompt?: string }).prompt}
+                            ? `matched concept in: ${getExercisePrompt(exercise)}`
+                            : getExercisePrompt(exercise)}
                         </span>
                       </div>
                     ))}

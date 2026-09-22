@@ -5,6 +5,7 @@ const NAV_LINKS = [
   { href: "/", label: "Tree", key: "tree" },
   { href: "/lessons", label: "Lessons", key: "lessons" },
   { href: "/search", label: "🔍 Search", key: "search" },
+  { href: "/interview", label: "🎤 Interview", key: "interview" },
 ] as const;
 
 type NavKey = (typeof NAV_LINKS)[number]["key"];

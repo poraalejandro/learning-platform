@@ -72,3 +72,28 @@ export type Exercise = {
     | ParsonsContent
     | Record<string, unknown>;
 };
+
+// `meta` was introduced with the 22 sep content seed (M4 onward) and the
+// engine otherwise ignores it — this is its first real consumer. M1-M3
+// exercises predate it, so every reader here must treat a missing `meta`
+// (or a missing field on it) as "no", not as an error.
+export type ExerciseMeta = {
+  difficulty?: 1 | 2 | 3;
+  interview?: boolean;
+  concepts?: string[];
+  recuerda_de?: string;
+};
+
+export function getExerciseMeta(exercise: Exercise): ExerciseMeta {
+  const content = exercise.content as { meta?: ExerciseMeta };
+  return content.meta ?? {};
+}
+
+export function isInterviewExercise(exercise: Exercise): boolean {
+  return getExerciseMeta(exercise).interview === true;
+}
+
+export function getExercisePrompt(exercise: Exercise): string {
+  const content = exercise.content as { prompt?: string };
+  return content.prompt ?? "";
+}
