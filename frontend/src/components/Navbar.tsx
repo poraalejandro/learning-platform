@@ -4,6 +4,7 @@ import { signOut } from "@/app/actions";
 const NAV_LINKS = [
   { href: "/", label: "Tree", key: "tree" },
   { href: "/lessons", label: "Lessons", key: "lessons" },
+  { href: "/search", label: "🔍 Search", key: "search" },
 ] as const;
 
 type NavKey = (typeof NAV_LINKS)[number]["key"];
