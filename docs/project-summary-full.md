@@ -39,7 +39,7 @@ Regla de oro seguida en todo el proyecto: **no se empieza una fase sin desplegar
 
 ## 5. Trabajo pedido fuera del roadmap original (semana del 15–17 sep)
 
-- **Secciones del árbol**: columna `skill_nodes.section` con clave en inglés (`python`/`genai`/`project`/`engineering`) ya preparada para la futura migración de idioma — cambiar la etiqueta visible es tocar `lib/sections.ts`, no la base de datos. Fondo con degradado por sección.
+- **Secciones del árbol**: columna `skill_nodes.section` con clave en inglés (`python`/`genai`/`project`/`engineering`). Fondo con degradado por sección.
 - **Índice lateral** (`TreeIndex`) con enlaces de ancla a cada sección, visible a partir de `lg:` (1024px).
 - **Conectores del árbol** borde-a-borde (no centro-a-centro) con animación de pulso continuo en los completados.
 - **Navbar compartido** en las 4 páginas autenticadas.
@@ -140,16 +140,16 @@ Nota: se propuso un 8º tipo (preguntas tipo test / multiple choice) y se descar
 
 ## 9. Convenciones a respetar al generar contenido
 
-- **Idioma: español**, tanto interfaz como contenido, por ahora. La migración a inglés está decidida "con el tiempo" pero no es prioridad — no generar contenido en inglés todavía.
+- **Idioma: inglés**, tanto interfaz como contenido (migrado el 22 sep; ya no queda español en la app ni en la base de datos).
 - IDs de ejercicio siguen el patrón `{node-id}-{tipo abreviado}{n}` (p.ej. `m2-fixbug1`, `m3-e4`) o `{node}-e{n}` genérico — mantener consistencia con lo ya sembrado.
+- Los identificadores dentro del código Python de los ejercicios (nombres de función, variables) están en inglés — nuevo contenido debe seguir esa convención, no mezclar español.
 - Los ejercicios `code`/`fix_bug` deben poder ejecutarse en Pyodide (Python puro estándar, sin librerías externas no soportadas en WASM).
 - Las side quests (S1–S6) son de ingeniería de software (Clean Code, SOLID, testing, patrones, arquitectura, Docker) — más conceptuales, probablemente con más peso en `flashcard`/`match`/`recall` que en `code`.
 - M6–M9 (sección `genai`) son sobre RAG, embeddings, prompting, tool calling y agentes con LangGraph — contenido más avanzado que M1–M5.
 
 ## 10. Backlog pendiente (fuera del alcance de "generar contenido")
 
-1. **Buscador de conceptos** — aparcado hasta tener más contenido.
-2. **Migración completa a inglés** — no ahora, decidido "con el tiempo". Implica borrar (no traducir) el contenido en español existente. Confirmar alcance exacto antes de tocarlo.
+Ninguno bloqueado por contenido — ver `docs/backlog.md` para lo que queda (prerrequisitos de side quests sin decidir, aprovechar el campo `meta`).
 
 ## 11. Siguiente paso natural
 
