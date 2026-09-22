@@ -45,7 +45,7 @@ export default async function ExercisePage({
     redirect(`/node/${nodeId}/review`);
   }
 
-  // Where "Siguiente ejercicio" goes once this one is solved: the next
+  // Where "Next exercise" goes once this one is solved: the next
   // exercise in this node the user hasn't passed yet, wrapping back to the
   // start if the remaining ones are behind the current position. Null means
   // there's nothing left to do in this node.
@@ -74,7 +74,7 @@ export default async function ExercisePage({
       <Navbar userEmail={user.email ?? ""} active="tree" />
       <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6 py-10">
         <Link href={`/node/${nodeId}`} className="text-sm text-primary underline transition-opacity hover:opacity-75">
-          ← Volver a los ejercicios
+          ← Back to exercises
         </Link>
 
         {/* fix_bug reuses CodeExercise as-is: same content shape (starter_code

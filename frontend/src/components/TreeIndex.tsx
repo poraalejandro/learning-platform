@@ -9,7 +9,7 @@ import { sectionLabel } from "@/lib/sections";
  */
 export function TreeIndex({ sections }: { sections: string[] }) {
   return (
-    <nav aria-label="Secciones del árbol" className="sticky top-20 flex w-40 shrink-0 flex-col gap-0.5 self-start">
+    <nav aria-label="Tree sections" className="sticky top-20 flex w-40 shrink-0 flex-col gap-0.5 self-start">
       {sections.map((key) => (
         <a
           key={key}

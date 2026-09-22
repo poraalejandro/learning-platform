@@ -5,9 +5,9 @@
  */
 export const SECTION_LABELS: Record<string, string> = {
   python: "Python",
-  genai: "IA generativa",
-  project: "Proyecto",
-  engineering: "Ingeniería de software",
+  genai: "Generative AI",
+  project: "Project",
+  engineering: "Software engineering",
 };
 
 export const SECTION_ORDER = ["python", "genai", "project", "engineering"];

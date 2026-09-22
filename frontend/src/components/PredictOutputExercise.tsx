@@ -23,7 +23,7 @@ export function PredictOutputExercise({
   const [solved, setSolved] = useState(false);
   const [revealed, setRevealed] = useState(false);
 
-  // Cleared as soon as they start editing again, so a red "no es correcto"
+  // Cleared as soon as they start editing again, so a red "not correct"
   // doesn't sit there contradicting the answer they're currently typing.
   const [showWrong, setShowWrong] = useState(false);
 
@@ -62,7 +62,7 @@ export function PredictOutputExercise({
       <pre className="overflow-x-auto rounded-lg border bg-surface-2 p-3 text-sm">{content.code}</pre>
 
       <label className="flex flex-col gap-1 text-sm">
-        ¿Qué crees que imprime o devuelve este código?
+        What do you think this code prints or returns?
         <input
           type="text"
           value={prediction}
@@ -82,7 +82,7 @@ export function PredictOutputExercise({
             disabled={!prediction}
             className="rounded-lg bg-primary px-3 py-2 text-sm text-white transition-all duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
           >
-            Comprobar
+            Check
           </button>
           {/* Only offered once they've actually tried — otherwise the answer
               is one click away without any thinking. */}
@@ -91,7 +91,7 @@ export function PredictOutputExercise({
               onClick={handleReveal}
               className="rounded-lg border px-3 py-2 text-sm transition-all duration-150 hover:bg-surface-2 active:scale-95"
             >
-              🏳 Ver la respuesta
+              🏳 Reveal the answer
             </button>
           )}
         </div>
@@ -99,7 +99,7 @@ export function PredictOutputExercise({
 
       {showWrong && !finished && (
         <p className="animate-shake text-red-600 dark:text-red-400">
-          ❌ No es correcto. Repasa el código línea a línea y prueba otra vez.
+          ❌ Not correct. Trace through the code line by line and try again.
         </p>
       )}
 
@@ -110,7 +110,7 @@ export function PredictOutputExercise({
           }`}
         >
           <p className="font-medium">
-            {solved ? "✅ ¡Correcto!" : `La salida real es: ${content.expected_output}`}
+            {solved ? "✅ Correct!" : `The actual output is: ${content.expected_output}`}
           </p>
           {content.explanation && <p className="mt-1 text-muted">{content.explanation}</p>}
         </div>

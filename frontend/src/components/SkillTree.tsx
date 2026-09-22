@@ -19,10 +19,10 @@ const STATUS_STYLES: Record<NodeStatus, string> = {
 };
 
 const STATUS_LABEL: Record<NodeStatus, string> = {
-  locked: "Bloqueado",
-  available: "Disponible",
-  in_progress: "En curso",
-  completed: "Completado",
+  locked: "Locked",
+  available: "Available",
+  in_progress: "In progress",
+  completed: "Completed",
 };
 
 const STATUS_ICON: Record<NodeStatus, string> = {
@@ -40,7 +40,7 @@ function NodeCard({ node, status, unlockHint }: { node: SkillNode; status: NodeS
         <span className="text-xs whitespace-nowrap">{STATUS_ICON[status]} {STATUS_LABEL[status]}</span>
       </div>
       {status === "locked" && unlockHint && (
-        <p className="mt-1 text-xs opacity-80">Requiere: {unlockHint}</p>
+        <p className="mt-1 text-xs opacity-80">Requires: {unlockHint}</p>
       )}
     </>
   );

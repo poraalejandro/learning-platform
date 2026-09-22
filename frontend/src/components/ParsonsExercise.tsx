@@ -77,7 +77,7 @@ export function ParsonsExercise({
               <button
                 onClick={() => move(i, -1)}
                 disabled={i === 0}
-                aria-label="Subir línea"
+                aria-label="Move up"
                 className="transition-transform active:scale-90 disabled:opacity-20"
               >
                 ▲
@@ -85,7 +85,7 @@ export function ParsonsExercise({
               <button
                 onClick={() => move(i, 1)}
                 disabled={i === lines.length - 1}
-                aria-label="Bajar línea"
+                aria-label="Move down"
                 className="transition-transform active:scale-90 disabled:opacity-20"
               >
                 ▼
@@ -101,14 +101,14 @@ export function ParsonsExercise({
           onClick={handleCheck}
           className="rounded-lg bg-primary px-3 py-2 text-sm text-white transition-all duration-150 hover:brightness-110 active:scale-95"
         >
-          Comprobar orden
+          Check order
         </button>
         {!showSolution && (
           <button
             onClick={handleRevealSolution}
             className="rounded-lg border px-3 py-2 text-sm transition-all duration-150 hover:bg-surface-2 active:scale-95 "
           >
-            🏳 Ver solución
+            🏳 Reveal solution
           </button>
         )}
       </div>
@@ -117,7 +117,7 @@ export function ParsonsExercise({
         <p
           className={`animate-pop-in ${checked ? "font-medium text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
         >
-          {checked ? "✅ ¡Orden correcto! Progreso guardado." : "❌ Todavía no es el orden correcto."}
+          {checked ? "✅ Correct order! Progress saved." : "❌ Not the right order yet."}
         </p>
       )}
 

@@ -32,12 +32,12 @@ export default async function LessonPage({ params }: { params: Promise<{ lessonI
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
         <div>
           <Link href="/lessons" className="text-sm text-primary underline transition-opacity hover:opacity-75">
-            ← Todas las lecciones
+            ← All lessons
           </Link>
           <h1 className="mt-2 text-2xl font-semibold">{lesson.title}</h1>
           {node && (
             <p className="mt-1 text-sm text-muted">
-              Parte de{" "}
+              Part of{" "}
               <Link href={`/node/${node.id}`} className="text-primary underline underline-offset-2">
                 {node.title}
               </Link>

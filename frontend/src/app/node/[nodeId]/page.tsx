@@ -7,11 +7,11 @@ import { GATING_EXERCISE_TYPES, type Exercise, type ExerciseType } from "@/lib/e
 import { Navbar } from "@/components/Navbar";
 
 const TYPE_LABEL: Record<ExerciseType, string> = {
-  code: "Código",
-  fix_bug: "Arregla el bug",
-  predict_output: "Predice la salida",
-  match: "Emparejar",
-  parsons: "Ordenar líneas",
+  code: "Code",
+  fix_bug: "Fix the bug",
+  predict_output: "Predict the output",
+  match: "Match",
+  parsons: "Reorder lines",
   flashcard: "Flashcard",
   recall: "Recall",
 };
@@ -84,8 +84,8 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
   // before." Due-date filtering still applies once it's been reviewed once.
   function gatingExerciseBadge(exerciseId: string) {
     const card = cardsByExercise.get(exerciseId);
-    if (card && card.due_date <= today) return "🔁 Repasar";
-    return passedIds.has(exerciseId) ? "✅ Hecho" : "⬜ Pendiente";
+    if (card && card.due_date <= today) return "🔁 Review";
+    return passedIds.has(exerciseId) ? "✅ Done" : "⬜ Pending";
   }
 
   return (
@@ -94,7 +94,7 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
       <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6 py-10">
         <div>
           <Link href="/" className="text-sm text-primary underline transition-opacity hover:opacity-75">
-            ← Volver al árbol
+            ← Back to the tree
           </Link>
           <h1 className="mt-2 text-2xl font-semibold">{node.title}</h1>
           {node.description && <p className="text-muted">{node.description}</p>}
@@ -121,9 +121,9 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
               href={`/node/${nodeId}/review`}
               className="flex items-center justify-between rounded-xl border border-primary/45 bg-primary/10 px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
             >
-              <span className="font-medium">📚 Flashcards y recall</span>
+              <span className="font-medium">📚 Flashcards & recall</span>
               <span className="text-sm">
-                {dueCount > 0 ? `🔁 ${dueCount} pendiente${dueCount === 1 ? "" : "s"}` : "✅ Al día"}
+                {dueCount > 0 ? `🔁 ${dueCount} due` : "✅ Up to date"}
               </span>
             </Link>
           )}
@@ -138,7 +138,7 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
                 <span className="mr-2 rounded-md bg-surface-2 px-2 py-0.5 text-xs">
                   {TYPE_LABEL[exercise.type]}
                 </span>
-                Ejercicio {exercise.position}
+                Exercise {exercise.position}
               </span>
               <span className="text-sm">{gatingExerciseBadge(exercise.id)}</span>
             </Link>
@@ -146,7 +146,7 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
         </div>
 
         {typedExercises.length === 0 && (
-          <p className="text-muted">Todavía no hay ejercicios para este nodo.</p>
+          <p className="text-muted">No exercises for this node yet.</p>
         )}
       </main>
     </>

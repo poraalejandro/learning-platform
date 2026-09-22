@@ -118,7 +118,7 @@ export function MatchExercise({
       {done && (
         <>
           <p className="animate-pop-in font-medium text-green-600 dark:text-green-400">
-            ✅ ¡Todo emparejado correctamente! Progreso guardado.
+            ✅ All matched correctly! Progress saved.
           </p>
           <NextExerciseLink nodeId={nodeId} nextHref={nextHref} />
         </>

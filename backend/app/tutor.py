@@ -17,16 +17,16 @@ MODEL_NAME = "qwen/qwen3.8-27b"
 # the last, but rung 3 still stops short of runnable code — that line is
 # drawn in the system prompt below, not left to the model's judgment alone.
 HINT_LEVEL_INSTRUCTIONS = {
-    1: "Da SOLO una pista conceptual: recuerda una idea o hazle una pregunta que le haga pensar. Nada de código ni de pasos concretos.",
-    2: "Describe la ESTRATEGIA a seguir en palabras (qué enfoque tomar), sin escribir código ni pseudocódigo.",
-    3: "Da una pista muy concreta -- qué método, operador o estructura usar, incluso una línea de pseudocódigo -- pero JAMÁS el código completo que resuelve el ejercicio.",
+    1: "Give ONLY a conceptual hint: recall an idea, or ask a question that makes them think. No code, no concrete steps.",
+    2: "Describe the STRATEGY to follow in words (what approach to take), without writing code or pseudocode.",
+    3: "Give a very concrete hint -- which method, operator, or structure to use, even a line of pseudocode -- but NEVER the full code that solves the exercise.",
 }
 
-SYSTEM_PROMPT = """Eres un tutor de programación Python para un estudiante que está aprendiendo activamente, no buscando que le resuelvan el ejercicio.
+SYSTEM_PROMPT = """You are a Python programming tutor for a student who is actively learning, not looking to have the exercise solved for them.
 
-Regla innegociable: NUNCA escribas la solución completa ni código que el estudiante pueda copiar y pegar para que el ejercicio funcione, sin importar en qué nivel de pista estés o lo que el estudiante pida explícitamente. Si insiste en pedir la solución, recuérdale amablemente que puede revelarla él mismo con el botón "Ver solución" si lo prefiere, pero no se la des tú.
+Non-negotiable rule: NEVER write the complete solution or code the student could copy-paste to make the exercise pass, no matter what hint level you're at or what the student explicitly asks for. If they insist on asking for the solution, gently remind them they can reveal it themselves with the "Reveal solution" button if they prefer, but don't give it to them yourself.
 
-Responde en español, en 2-3 frases como máximo."""
+Answer in English, in 2-3 sentences at most."""
 
 
 class HintRequest(BaseModel):
@@ -45,7 +45,7 @@ async def get_hint(request: HintRequest, user_id: str = Depends(verify_jwt)):
     if not allowed:
         raise HTTPException(
             status_code=429,
-            detail="Has alcanzado el límite de pistas por ahora. Prueba de nuevo más tarde.",
+            detail="You've hit the hint limit for now. Try again later.",
         )
 
     exercise = await get_exercise(request.exercise_id)
@@ -55,14 +55,14 @@ async def get_hint(request: HintRequest, user_id: str = Depends(verify_jwt)):
     content = exercise["content"]
     level_instruction = HINT_LEVEL_INSTRUCTIONS[request.hint_level]
 
-    user_message = f"""Ejercicio: {content["prompt"]}
+    user_message = f"""Exercise: {content["prompt"]}
 
-Código actual del estudiante:
+Student's current code:
 ```python
 {request.student_code or content.get("starter_code", "")}
 ```
 
-Nivel de pista pedido: {request.hint_level}. {level_instruction}"""
+Requested hint level: {request.hint_level}. {level_instruction}"""
 
     # Groq's SDK is sync; run it off the event loop rather than blocking it
     # alongside the async Supabase calls above.

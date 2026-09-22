@@ -38,15 +38,15 @@ export default async function LessonsPage() {
       <Navbar userEmail={user.email ?? ""} active="lessons" />
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-6 py-10">
         <div className="animate-rise-in">
-          <h1 className="text-2xl font-semibold">Lecciones</h1>
+          <h1 className="text-2xl font-semibold">Lessons</h1>
           <p className="mt-1 text-sm text-muted">
-            Material de referencia por tema — para consultar mientras resuelves ejercicios, no un
-            requisito para avanzar.
+            Reference material by topic — to consult while you solve exercises, not a
+            requirement to progress.
           </p>
         </div>
 
         {groups.length === 0 ? (
-          <p className="text-muted">Todavía no hay lecciones publicadas.</p>
+          <p className="text-muted">No lessons published yet.</p>
         ) : (
           <div className="flex flex-col gap-6">
             {groups.map(({ node, lessons: nodeLessons }) => (

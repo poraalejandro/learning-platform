@@ -6,10 +6,10 @@ import type { Rating, SrsCard } from "@/lib/sm2";
 import type { Exercise, FlashcardContent, RecallContent } from "@/lib/exercises";
 
 const RATING_BUTTONS: { rating: Rating; label: string; classes: string }[] = [
-  { rating: "again", label: "Otra vez", classes: "bg-red-600 hover:bg-red-700" },
-  { rating: "hard", label: "Difícil", classes: "bg-orange-500 hover:bg-orange-600" },
-  { rating: "good", label: "Bien", classes: "bg-green-600 hover:bg-green-700" },
-  { rating: "easy", label: "Fácil", classes: "bg-primary hover:brightness-110" },
+  { rating: "again", label: "Again", classes: "bg-red-600 hover:bg-red-700" },
+  { rating: "hard", label: "Hard", classes: "bg-orange-500 hover:bg-orange-600" },
+  { rating: "good", label: "Good", classes: "bg-green-600 hover:bg-green-700" },
+  { rating: "easy", label: "Easy", classes: "bg-primary hover:brightness-110" },
 ];
 
 const TYPE_LABEL: Record<string, string> = { flashcard: "Flashcard", recall: "Recall" };
@@ -69,7 +69,7 @@ export function FlashcardCard({
             onClick={() => setRevealed(true)}
             className="w-full rounded-xl bg-primary py-3 font-medium text-white transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
           >
-            Mostrar respuesta
+            Show answer
           </button>
         ) : (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">

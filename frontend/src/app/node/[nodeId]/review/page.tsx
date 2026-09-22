@@ -62,15 +62,15 @@ export default async function ReviewPage({ params }: { params: Promise<{ nodeId:
       <Navbar userEmail={user.email ?? ""} active="tree" />
       <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6 py-10">
         <Link href={`/node/${nodeId}`} className="text-sm text-primary underline transition-opacity hover:opacity-75">
-          ← Volver a los ejercicios
+          ← Back to exercises
         </Link>
 
         {dueQueue.length === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded-2xl border py-16 text-center">
             <p className="text-4xl">🎉</p>
-            <p className="font-medium">Nada pendiente de repasar en {node.title} por ahora.</p>
+            <p className="font-medium">Nothing due for review in {node.title} right now.</p>
             <Link href={`/node/${nodeId}`} className="text-sm text-primary underline transition-opacity hover:opacity-75">
-              Volver a los ejercicios
+              Back to exercises
             </Link>
           </div>
         ) : (

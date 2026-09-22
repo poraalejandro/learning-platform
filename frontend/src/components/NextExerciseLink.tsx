@@ -13,7 +13,7 @@ export function NextExerciseLink({ nodeId, nextHref }: { nodeId: string; nextHre
         href={`/node/${nodeId}`}
         className="animate-pop-in self-start rounded-lg border border-success/50 bg-tint-success px-4 py-2.5 text-sm font-medium transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-95"
       >
-        🎉 No queda nada pendiente en este nodo — volver
+        🎉 Nothing left to do in this node — go back
       </Link>
     );
   }
@@ -23,7 +23,7 @@ export function NextExerciseLink({ nodeId, nextHref }: { nodeId: string; nextHre
       href={nextHref}
       className="animate-pop-in self-start rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:scale-95"
     >
-      Siguiente ejercicio →
+      Next exercise →
     </Link>
   );
 }

@@ -99,8 +99,8 @@ export function CodeExercise({
       const fallback = content.hints[nextLevel - 1];
       const note =
         error instanceof TutorError && error.status === 429
-          ? " (límite de pistas alcanzado por ahora — esta es una pista estática de reserva)"
-          : " (el tutor no está disponible ahora mismo — pista estática de reserva)";
+          ? " (hint limit reached for now — this is a static fallback hint)"
+          : " (the tutor isn't available right now — static fallback hint)";
       setHints((prev) => [...prev, { text: (fallback ?? "") + note, isFallback: true }]);
     } finally {
       setHintLoading(false);
@@ -131,7 +131,7 @@ export function CodeExercise({
           disabled={running}
           className="rounded-lg bg-primary px-3 py-2 text-sm text-white transition-all duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
         >
-          {running ? "Ejecutando..." : "▶ Ejecutar"}
+          {running ? "Running..." : "▶ Run"}
         </button>
         {hintLevel < maxLevel && (
           <button
@@ -139,7 +139,7 @@ export function CodeExercise({
             disabled={hintLoading}
             className="rounded-lg border px-3 py-2 text-sm transition-all duration-150 hover:bg-surface-2 active:scale-95 disabled:opacity-50 "
           >
-            {hintLoading ? "Pensando..." : `💡 Pista (${hintLevel}/${maxLevel})`}
+            {hintLoading ? "Thinking..." : `💡 Hint (${hintLevel}/${maxLevel})`}
           </button>
         )}
         {!showSolution && (
@@ -147,7 +147,7 @@ export function CodeExercise({
             onClick={handleRevealSolution}
             className="rounded-lg border px-3 py-2 text-sm transition-all duration-150 hover:bg-surface-2 active:scale-95 "
           >
-            🏳 Ver solución
+            🏳 Reveal solution
           </button>
         )}
       </div>
@@ -170,7 +170,7 @@ export function CodeExercise({
               className={result.passed ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}
             >
               {result.passed ? "✅" : "❌"} {result.call} → {result.error ?? result.actual}
-              {!result.passed && !result.error && ` (esperado: ${result.expected})`}
+              {!result.passed && !result.error && ` (expected: ${result.expected})`}
             </li>
           ))}
         </ul>
@@ -179,7 +179,7 @@ export function CodeExercise({
       {passed && (
         <>
           <p className="animate-pop-in font-medium text-green-600 dark:text-green-400">
-            ✅ ¡Correcto! Progreso guardado.
+            ✅ Correct! Progress saved.
           </p>
           <NextExerciseLink nodeId={nodeId} nextHref={nextHref} />
         </>

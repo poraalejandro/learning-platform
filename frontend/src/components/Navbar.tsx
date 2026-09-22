@@ -2,8 +2,8 @@ import Link from "next/link";
 import { signOut } from "@/app/actions";
 
 const NAV_LINKS = [
-  { href: "/", label: "Árbol", key: "tree" },
-  { href: "/lessons", label: "Lecciones", key: "lessons" },
+  { href: "/", label: "Tree", key: "tree" },
+  { href: "/lessons", label: "Lessons", key: "lessons" },
 ] as const;
 
 type NavKey = (typeof NAV_LINKS)[number]["key"];
@@ -51,7 +51,7 @@ export function Navbar({ userEmail, active }: { userEmail: string; active: NavKe
               type="submit"
               className="rounded-lg border px-3 py-1.5 text-sm text-muted transition-all duration-150 hover:bg-surface-2 hover:text-foreground active:scale-95"
             >
-              Salir
+              Sign out
             </button>
           </form>
         </div>

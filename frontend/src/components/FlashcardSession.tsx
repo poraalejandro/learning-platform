@@ -26,10 +26,10 @@ export function FlashcardSession({
       <div className="animate-pop-in flex flex-col items-center gap-3 rounded-2xl border py-16 text-center">
         <p className="text-4xl">✅</p>
         <p className="font-medium">
-          Sesión completada — {items.length} tarjeta{items.length === 1 ? "" : "s"} repasadas.
+          Session complete — {items.length} card{items.length === 1 ? "" : "s"} reviewed.
         </p>
         <Link href={`/node/${nodeId}`} className="text-sm text-primary underline">
-          Volver a los ejercicios
+          Back to exercises
         </Link>
       </div>
     );
@@ -43,7 +43,7 @@ export function FlashcardSession({
       <div>
         <div className="mb-1 flex justify-between text-sm text-muted">
           <span>
-            Tarjeta {index + 1} de {items.length}
+            Card {index + 1} of {items.length}
           </span>
         </div>
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">

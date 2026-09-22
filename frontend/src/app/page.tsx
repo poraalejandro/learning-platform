@@ -19,13 +19,13 @@ export default async function Home() {
         </span>
         <h1 className="text-3xl font-semibold">PyQuest</h1>
         <p className="max-w-sm text-muted">
-          Aprende Python e ingeniería de IA resolviendo ejercicios, no leyendo lecciones.
+          Learn Python and AI engineering by solving exercises, not reading lessons.
         </p>
         <Link
           href="/login"
           className="mt-2 rounded-lg bg-primary px-5 py-2.5 font-medium text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:scale-95"
         >
-          Entrar
+          Sign in
         </Link>
       </main>
     );
@@ -66,14 +66,13 @@ export default async function Home() {
       <main className="flex flex-col items-center gap-8 px-6 py-10 lg:px-0">
         <div className="animate-rise-in flex w-full max-w-5xl flex-wrap items-end justify-between gap-3 lg:px-6">
           <div>
-            <h1 className="text-2xl font-semibold">Tu ruta</h1>
+            <h1 className="text-2xl font-semibold">Your path</h1>
             <p className="mt-1 text-sm text-muted">
-              Completa los nodos para desbloquear los siguientes. Las side quests se abren desde su
-              nodo principal.
+              Complete nodes to unlock the next ones. Side quests open up from their parent node.
             </p>
           </div>
           <span className="rounded-full border border-primary/30 bg-primary-light px-3 py-1 text-xs font-medium text-primary dark:text-white">
-            {completedCount} / {allNodes.length} completados
+            {completedCount} / {allNodes.length} completed
           </span>
         </div>
 

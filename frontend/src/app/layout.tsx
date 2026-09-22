@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "PyQuest",
-  description: "Aprende Python e ingeniería de IA con práctica activa y repetición espaciada.",
+  description: "Learn Python and AI engineering through active practice and spaced repetition.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
