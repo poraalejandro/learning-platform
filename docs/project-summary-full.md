@@ -54,20 +54,20 @@ Regla de oro seguida en todo el proyecto: **no se empieza una fase sin desplegar
 
 | Nodo | Track | Sección | Ejercicios reales | Lección |
 |---|---|---|---|---|
-| M1 Python básico | main | python | 7 (flashcard×5, recall×1, code×1) | ✅ 1 lección real ("Sintaxis básica") |
-| M2 Estructuras de datos | main | python | 11 (flashcard×4, recall×1, code×2, fix_bug×1, predict_output×1, match×1, parsons×1) | ❌ |
-| M3 OOP | main | python | 6 (flashcard×5, code×1 aprox.) | ❌ |
-| M4 Testing/errores | main | python | ❌ **vacío** | ❌ |
-| M5 Async | main | python | ❌ **vacío** | ❌ |
-| M6 RAG/vectores | main | genai | ❌ **vacío** | ❌ |
-| M7 Prompting/tools | main | genai | ❌ **vacío** | ❌ |
-| M8 Agentes LangGraph | main | genai | ❌ **vacío** | ❌ |
-| M9 Proyecto integrador | main | project | ❌ **vacío** | ❌ |
-| S1–S6 (todas las side quests) | side | engineering | ❌ **ninguna tiene ejercicios** | ❌ |
+| M1 Python básico | main | python | 7 (flashcard×5, recall×1, code×1) | 1 |
+| M2 Estructuras de datos | main | python | 11 (7 original + 4 tipos nuevos reales: fix_bug/predict_output/match/parsons) | 2 |
+| M3 OOP | main | python | 6 | 2 |
+| M4 Testing/errores | main | python | 17 | 3 |
+| M5 Async | main | python | 15 | 3 |
+| M6 RAG/vectores | main | genai | 15 | 3 |
+| M7 Prompting/tools | main | genai | 14 | 3 |
+| M8 Agentes LangGraph | main | genai | 13 | 3 |
+| M9 Proyecto integrador | main | project | 8 | 2 |
+| S1–S6 (cada side quest) | side | engineering | 8 cada una (48 en total) | 2 cada una (12 en total) |
 
-**Total: 24 ejercicios, 1 lección, sobre 15 nodos.** Los 4 ejercicios de M2 de tipos nuevos (`fix_bug`/`predict_output`/`match`/`parsons`) son placeholders para probar el motor de cada tipo, no contenido pedagógico currado — están bien pero son mínimos.
+**Total: 154 ejercicios, 34 lecciones, sobre 15 nodos — ninguno vacío ya** (actualizado 2026-09-22; las cifras de la tabla de arriba sustituyen la versión anterior de este documento, que reflejaba el estado a 17 sep con 12 nodos sin contenido). Los ejercicios `code`/`fix_bug`/`predict_output` traen un campo `meta` (`difficulty`, `interview`, `concepts`, a veces `recuerda_de`) que el motor aún ignora — pensado para un futuro "modo entrevista" y estadísticas por concepto.
 
-**Esto es exactamente el hueco que hay que llenar**: M4 en adelante (todo el resto del main quest) y las 6 side quests están completamente vacíos, sin un solo ejercicio ni lección.
+**Backlog de contenido restante**: enriquecer `docs/backlog.md` si aparece contenido nuevo; el "hueco" de la sección anterior de este documento (M4–M9 y S1–S6 vacíos) ya está cerrado.
 
 ## 7. Esquema de base de datos
 
@@ -153,4 +153,4 @@ Nota: se propuso un 8º tipo (preguntas tipo test / multiple choice) y se descar
 
 ## 11. Siguiente paso natural
 
-Ninguna fase del roadmap original queda pendiente. Lo único que falta es **contenido real**: ejercicios y lecciones para M4–M9 y S1–S6 (12 de los 15 nodos están completamente vacíos), y enriquecer los ejercicios placeholder de tipos nuevos en M2.
+Ninguna fase del roadmap original queda pendiente, y el hueco de contenido (M4–M9 y S1–S6 vacíos) ya se cerró el 22 sep con 154 ejercicios y 34 lecciones en total. Lo que queda es el backlog de la sección 10 (buscador de conceptos, migración a inglés), aprovechar el campo `meta` en el motor (modo entrevista, estadísticas por concepto), y contenido nuevo puntual si se detectan huecos al usar la app.
