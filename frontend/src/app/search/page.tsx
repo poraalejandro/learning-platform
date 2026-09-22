@@ -5,6 +5,7 @@ import type { SkillNode } from "@/lib/skillTree";
 import { getExercisePrompt, type Exercise, type ExerciseType } from "@/lib/exercises";
 import type { Lesson } from "@/lib/lessons";
 import { matchExercise, matchText } from "@/lib/search";
+import { sectionLabel, uniqueSectionsInOrder } from "@/lib/sections";
 import { Navbar } from "@/components/Navbar";
 
 const TYPE_LABEL: Record<ExerciseType, string> = {
@@ -33,6 +34,35 @@ export default async function SearchPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Nodes + lessons are always fetched (small tables) to build the browse
+  // index below the form; exercises are only needed once there's a query to
+  // match against.
+  const [{ data: nodes }, { data: lessons }] = await Promise.all([
+    supabase.from("skill_nodes").select("*").order("track").order("position"),
+    supabase.from("lessons").select("id, node_id, title, position, content_md").order("position"),
+  ]);
+  const typedNodes = (nodes ?? []) as SkillNode[];
+  const typedLessons = (lessons ?? []) as Lesson[];
+  const nodesById = new Map(typedNodes.map((n) => [n.id, n]));
+  const nodeOrder = typedNodes.map((n) => n.id);
+
+  const lessonsByNode = new Map<string, Lesson[]>();
+  for (const lesson of typedLessons) {
+    const list = lessonsByNode.get(lesson.node_id) ?? [];
+    list.push(lesson);
+    lessonsByNode.set(lesson.node_id, list);
+  }
+
+  // A table-of-contents-style index (section -> node -> its lessons) so
+  // there's something to browse before typing anything, the way a
+  // documentation tutorial's own contents page works.
+  const browseSections = uniqueSectionsInOrder(typedNodes).map((section) => ({
+    section,
+    nodes: typedNodes
+      .filter((n) => n.section === section)
+      .map((node) => ({ node, lessons: lessonsByNode.get(node.id) ?? [] })),
+  }));
+
   let groups: {
     node: SkillNode;
     exerciseMatches: { exercise: Exercise; kind: "concept" | "prompt" }[];
@@ -40,14 +70,9 @@ export default async function SearchPage({
   }[] = [];
 
   if (query) {
-    const [{ data: nodes }, { data: exercises }, { data: lessons }] = await Promise.all([
-      supabase.from("skill_nodes").select("*").order("track").order("position"),
-      supabase.from("exercises").select("id, node_id, type, position, content"),
-      supabase.from("lessons").select("id, node_id, title, position, content_md"),
-    ]);
-
-    const nodesById = new Map(((nodes ?? []) as SkillNode[]).map((n) => [n.id, n]));
-    const nodeOrder = (nodes ?? []).map((n) => n.id) as string[];
+    const { data: exercises } = await supabase
+      .from("exercises")
+      .select("id, node_id, type, position, content");
 
     const exerciseMatchesByNode = new Map<string, { exercise: Exercise; kind: "concept" | "prompt" }[]>();
     for (const exercise of (exercises ?? []) as Exercise[]) {
@@ -59,7 +84,7 @@ export default async function SearchPage({
     }
 
     const lessonMatchesByNode = new Map<string, Lesson[]>();
-    for (const lesson of (lessons ?? []) as Lesson[]) {
+    for (const lesson of typedLessons) {
       if (matchText(lesson.title, query) || matchText(lesson.content_md, query)) {
         const list = lessonMatchesByNode.get(lesson.node_id) ?? [];
         list.push(lesson);
@@ -106,6 +131,48 @@ export default async function SearchPage({
 
         {query && groups.length === 0 && (
           <p className="text-muted">No matches for &quot;{query}&quot;.</p>
+        )}
+
+        {/* Contents-page-style index: every node under its section, with its
+            lessons nested underneath — something to browse before typing
+            anything, not just a blank box waiting for a query. Hidden once a
+            search is active so it doesn't compete with the results. */}
+        {!query && (
+          <div className="flex flex-col gap-6">
+            {browseSections.map(({ section, nodes: sectionNodes }) => (
+              <section key={section} className="flex flex-col gap-2">
+                <h2 className="text-xs font-semibold tracking-wide text-primary uppercase">
+                  {sectionLabel(section)}
+                </h2>
+                <div className="flex flex-col gap-3">
+                  {sectionNodes.map(({ node, lessons: nodeLessons }) => (
+                    <div key={node.id}>
+                      <Link
+                        href={`/node/${node.id}`}
+                        className="font-medium transition-opacity hover:opacity-75"
+                      >
+                        {node.title}
+                      </Link>
+                      {nodeLessons.length > 0 && (
+                        <ul className="mt-1 ml-4 flex flex-col gap-1">
+                          {nodeLessons.map((lesson) => (
+                            <li key={lesson.id}>
+                              <Link
+                                href={`/lessons/${lesson.id}`}
+                                className="text-sm text-muted underline-offset-2 hover:text-primary hover:underline"
+                              >
+                                {lesson.title}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
         )}
 
         {groups.length > 0 && (
