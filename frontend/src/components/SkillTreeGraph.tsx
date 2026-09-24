@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { NodeStatus, SkillNode } from "@/lib/skillTree";
 import { sectionLabel } from "@/lib/sections";
+import { ProgressRing } from "@/components/ProgressRing";
+
+export type NodeProgress = { done: number; total: number };
 
 // Faint, distinct per section — these are large background bands, so they
 // have to stay quiet enough not to compete with node status colours.
@@ -118,21 +121,40 @@ export function zoneGradient(zones: Zone[], totalHeight: number): string {
   return `linear-gradient(to bottom, ${stops.join(", ")})`;
 }
 
+/** Status line under a node's title: a progress ring + count once there's anything to count. */
+export function NodeProgressLine({ status, progress }: { status: NodeStatus; progress?: NodeProgress }) {
+  if (status === "locked" || !progress || progress.total === 0) {
+    return <span className="text-[11px]">{STATUS_ICON[status]}</span>;
+  }
+  const complete = status === "completed";
+  return (
+    <span className="inline-flex items-center gap-1 text-[11px] tabular-nums">
+      <ProgressRing done={progress.done} total={progress.total} size={14} complete={complete} />
+      {progress.done}/{progress.total}
+      {complete && <span aria-hidden>✅</span>}
+    </span>
+  );
+}
+
 function GraphNode({
   position,
   status,
+  progress,
   title,
   width = CARD_WIDTH,
 }: {
   position: Position;
   status: NodeStatus;
+  progress?: NodeProgress;
   title?: string;
   width?: number;
 }) {
   const body = (
     <>
       <div className="text-center text-xs leading-tight font-medium">{position.node.title}</div>
-      <div className="mt-1 text-center text-[11px]">{STATUS_ICON[status]}</div>
+      <div className="mt-1 flex justify-center">
+        <NodeProgressLine status={status} progress={progress} />
+      </div>
     </>
   );
 
@@ -144,10 +166,17 @@ function GraphNode({
   // same `transform` property — same node, two independent transforms.
   const wrapperStyle = { left: `${position.x}%`, top: `${position.y}px`, width };
 
+  // data-node-id is how TreeCelebration finds this card to play the
+  // unlock/complete animation — on the card itself, so the glow follows
+  // its rounded shape.
   if (status === "locked") {
     return (
       <div style={wrapperStyle} className="absolute z-10 -translate-x-1/2 -translate-y-1/2">
-        <div title={title} className={`rounded-xl border px-3 py-2 ${STATUS_STYLES[status]}`}>
+        <div
+          data-node-id={position.node.id}
+          title={title}
+          className={`rounded-xl border px-3 py-2 ${STATUS_STYLES[status]}`}
+        >
           {body}
         </div>
       </div>
@@ -157,6 +186,7 @@ function GraphNode({
   return (
     <div style={wrapperStyle} className="absolute z-10 -translate-x-1/2 -translate-y-1/2">
       <Link
+        data-node-id={position.node.id}
         href={`/node/${position.node.id}`}
         className={`block rounded-xl border px-3 py-2 transition-all duration-200 ease-out hover:-translate-y-1 hover:scale-105 hover:shadow-lg active:scale-95 active:duration-75 ${STATUS_STYLES[status]}`}
       >
@@ -170,12 +200,14 @@ export function SkillTreeGraph({
   mainNodes,
   sideNodes,
   statuses,
+  nodeProgress,
   sideUnlockTitles,
   sideParentId,
 }: {
   mainNodes: SkillNode[];
   sideNodes: SkillNode[];
   statuses: Map<string, NodeStatus>;
+  nodeProgress: Map<string, NodeProgress>;
   sideUnlockTitles: Map<string, string>;
   sideParentId: Map<string, string>;
 }) {
@@ -241,6 +273,7 @@ export function SkillTreeGraph({
           return (
             <g key={`main-${from.node.id}`}>
               <path
+                data-edge-from={from.node.id}
                 d={d}
                 fill="none"
                 pathLength={1}
@@ -276,6 +309,7 @@ export function SkillTreeGraph({
           return (
             <g key={`side-${node.id}`}>
               <line
+                data-edge-from={parent.node.id}
                 x1={startX}
                 y1={parent.y}
                 x2={endX}
@@ -306,13 +340,19 @@ export function SkillTreeGraph({
       </svg>
 
       {mainPositions.map((position) => (
-        <GraphNode key={position.node.id} position={position} status={statuses.get(position.node.id) ?? "locked"} />
+        <GraphNode
+          key={position.node.id}
+          position={position}
+          status={statuses.get(position.node.id) ?? "locked"}
+          progress={nodeProgress.get(position.node.id)}
+        />
       ))}
       {sidePositions.map((position) => (
         <GraphNode
           key={position.node.id}
           position={position}
           status={statuses.get(position.node.id) ?? "locked"}
+          progress={nodeProgress.get(position.node.id)}
           title={sideUnlockTitles.get(position.node.id) ? `Requiere: ${sideUnlockTitles.get(position.node.id)}` : undefined}
           width={SIDE_CARD_WIDTH}
         />

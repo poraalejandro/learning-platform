@@ -2,11 +2,13 @@ import Link from "next/link";
 import type { NodeStatus, SkillNode } from "@/lib/skillTree";
 import { sectionLabel, uniqueSectionsInOrder } from "@/lib/sections";
 import {
+  NodeProgressLine,
   SkillTreeGraph,
   computeMainPositions,
   computeTotalHeight,
   computeZones,
   zoneGradient,
+  type NodeProgress,
 } from "@/components/SkillTreeGraph";
 import { TreeIndex } from "@/components/TreeIndex";
 
@@ -25,19 +27,25 @@ const STATUS_LABEL: Record<NodeStatus, string> = {
   completed: "Completed",
 };
 
-const STATUS_ICON: Record<NodeStatus, string> = {
-  locked: "\u{1F512}",
-  available: "○",
-  in_progress: "⏳",
-  completed: "✅",
-};
-
-function NodeCard({ node, status, unlockHint }: { node: SkillNode; status: NodeStatus; unlockHint?: string }) {
+function NodeCard({
+  node,
+  status,
+  progress,
+  unlockHint,
+}: {
+  node: SkillNode;
+  status: NodeStatus;
+  progress?: NodeProgress;
+  unlockHint?: string;
+}) {
   const body = (
     <>
       <div className="flex items-center justify-between gap-2">
         <span className="font-medium">{node.title}</span>
-        <span className="text-xs whitespace-nowrap">{STATUS_ICON[status]} {STATUS_LABEL[status]}</span>
+        <span className="flex items-center gap-2 text-xs whitespace-nowrap">
+          <NodeProgressLine status={status} progress={progress} />
+          <span className="text-muted">{STATUS_LABEL[status]}</span>
+        </span>
       </div>
       {status === "locked" && unlockHint && (
         <p className="mt-1 text-xs opacity-80">Requires: {unlockHint}</p>
@@ -46,11 +54,16 @@ function NodeCard({ node, status, unlockHint }: { node: SkillNode; status: NodeS
   );
 
   if (status === "locked") {
-    return <div className={`rounded-xl border px-4 py-3 ${STATUS_STYLES[status]}`}>{body}</div>;
+    return (
+      <div data-node-id={node.id} className={`rounded-xl border px-4 py-3 ${STATUS_STYLES[status]}`}>
+        {body}
+      </div>
+    );
   }
 
   return (
     <Link
+      data-node-id={node.id}
       href={`/node/${node.id}`}
       className={`rounded-xl border px-4 py-3 transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] active:duration-75 ${STATUS_STYLES[status]}`}
     >
@@ -86,12 +99,14 @@ export function SkillTree({
   mainNodes,
   sideNodes,
   statuses,
+  nodeProgress,
   sideUnlockTitles,
   sideParentId,
 }: {
   mainNodes: SkillNode[];
   sideNodes: SkillNode[];
   statuses: Map<string, NodeStatus>;
+  nodeProgress: Map<string, NodeProgress>;
   sideUnlockTitles: Map<string, string>;
   sideParentId: Map<string, string>;
 }) {
@@ -117,7 +132,12 @@ export function SkillTree({
                 {sectionLabel(group.section)}
               </h2>
               {group.nodes.map((node) => (
-                <NodeCard key={node.id} node={node} status={statuses.get(node.id) ?? "locked"} />
+                <NodeCard
+                  key={node.id}
+                  node={node}
+                  status={statuses.get(node.id) ?? "locked"}
+                  progress={nodeProgress.get(node.id)}
+                />
               ))}
             </section>
           ))}
@@ -132,6 +152,7 @@ export function SkillTree({
               key={node.id}
               node={node}
               status={statuses.get(node.id) ?? "locked"}
+              progress={nodeProgress.get(node.id)}
               unlockHint={sideUnlockTitles.get(node.id)}
             />
           ))}
@@ -153,6 +174,7 @@ export function SkillTree({
               mainNodes={mainNodes}
               sideNodes={sideNodes}
               statuses={statuses}
+              nodeProgress={nodeProgress}
               sideUnlockTitles={sideUnlockTitles}
               sideParentId={sideParentId}
             />

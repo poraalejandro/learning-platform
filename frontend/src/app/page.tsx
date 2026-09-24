@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { computeNodeStatuses, type SkillNode } from "@/lib/skillTree";
 import { fetchTreeProgress } from "@/lib/treeProgress";
 import { SkillTree } from "@/components/SkillTree";
+import type { NodeProgress } from "@/components/SkillTreeGraph";
+import { TreeCelebration } from "@/components/TreeCelebration";
+import { PageTransition } from "@/components/PageTransition";
 import { Navbar } from "@/components/Navbar";
 
 export default async function Home() {
@@ -56,13 +59,31 @@ export default async function Home() {
 
   const completedCount = [...statuses.values()].filter((s) => s === "completed").length;
 
+  // Gating exercises passed / total per node, for the progress rings. Same
+  // inputs computeNodeStatuses used, so a ring can never disagree with the
+  // node's status.
+  const nodeProgress = new Map<string, NodeProgress>();
+  for (const node of allNodes) {
+    const gating = treeProgress.gatingExerciseIdsByNode.get(node.id) ?? [];
+    nodeProgress.set(node.id, {
+      done: gating.filter((id) => treeProgress.passedExerciseIds.has(id)).length,
+      total: gating.length,
+    });
+  }
+
   return (
     <>
       <Navbar userEmail={user.email ?? ""} active="tree" />
+      <TreeCelebration
+        userId={user.id}
+        statuses={Object.fromEntries(statuses)}
+        titles={Object.fromEntries(allNodes.map((n) => [n.id, n.title]))}
+      />
 
       {/* No horizontal padding at lg: — SkillTree's section backdrop needs to
           reach the true viewport edge there. Below lg: (no backdrop rendered)
           this still supplies the padding every child relies on. */}
+      <PageTransition>
       <main className="flex flex-col items-center gap-8 px-6 py-10 lg:px-0">
         <div className="animate-rise-in flex w-full max-w-5xl flex-wrap items-end justify-between gap-3 lg:px-6">
           <div>
@@ -80,10 +101,12 @@ export default async function Home() {
           mainNodes={mainNodes}
           sideNodes={sideNodes}
           statuses={statuses}
+          nodeProgress={nodeProgress}
           sideUnlockTitles={sideUnlockTitles}
           sideParentId={sideParentId}
         />
       </main>
+      </PageTransition>
     </>
   );
 }
