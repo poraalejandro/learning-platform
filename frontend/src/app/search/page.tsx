@@ -4,10 +4,20 @@ import { createClient } from "@/lib/supabase/server";
 import type { SkillNode } from "@/lib/skillTree";
 import { getExercisePrompt, type Exercise, type ExerciseType } from "@/lib/exercises";
 import type { Lesson } from "@/lib/lessons";
-import { matchExercise, matchText } from "@/lib/search";
+import { matchedConcepts, matchExercise, matchText, snippetAround, splitOnMatch } from "@/lib/search";
 import { sectionLabel, uniqueSectionsInOrder } from "@/lib/sections";
 import { PYTHON_GLOSSARY, PYTHON_GLOSSARY_HOME } from "@/lib/pythonGlossary";
 import { Navbar } from "@/components/Navbar";
+import { PageTransition } from "@/components/PageTransition";
+import { SEARCH_INPUT_ID } from "@/lib/keys";
+
+function Highlight({ text, query }: { text: string; query: string }) {
+  return (
+    <>
+      {splitOnMatch(text, query).map((part, i) => (part.match ? <mark key={i}>{part.text}</mark> : part.text))}
+    </>
+  );
+}
 
 const TYPE_LABEL: Record<ExerciseType, string> = {
   code: "Code",
@@ -120,7 +130,8 @@ export default async function SearchPage({
   return (
     <>
       <Navbar userEmail={user.email ?? ""} active="search" />
-      <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
+      <PageTransition>
+      <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6 sm:py-10">
         <div className="animate-rise-in">
           <h1 className="text-2xl font-semibold">Search</h1>
           <p className="mt-1 text-sm text-muted">
@@ -128,22 +139,30 @@ export default async function SearchPage({
           </p>
         </div>
 
-        <form action="/search" className="flex gap-2">
-          <input
-            type="text"
-            name="q"
-            defaultValue={query}
-            placeholder="Search concepts..."
-            autoFocus
-            className="flex-1 rounded-lg border bg-background px-3 py-2.5 transition-colors outline-none focus:border-primary"
-          />
-          <button
-            type="submit"
-            className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:brightness-110 active:scale-95"
-          >
-            🔍 Search
-          </button>
-        </form>
+        <div className="flex flex-col gap-1.5">
+          <form action="/search" className="flex gap-2">
+            <input
+              id={SEARCH_INPUT_ID}
+              type="search"
+              name="q"
+              defaultValue={query}
+              placeholder="Search concepts..."
+              autoFocus
+              className="min-w-0 flex-1 rounded-lg border bg-background px-3 py-2.5 transition-colors outline-none focus:border-primary"
+            />
+            <button
+              type="submit"
+              className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:brightness-110 active:scale-95"
+            >
+              🔍 <span className="hidden sm:inline">Search</span>
+            </button>
+          </form>
+          <p className="hidden text-xs text-muted pointer-fine:block">
+            Tip: press <kbd className="rounded border px-1 font-mono">/</kbd> or{" "}
+            <kbd className="rounded border px-1 font-mono">Ctrl</kbd>/<kbd className="rounded border px-1 font-mono">⌘</kbd>+
+            <kbd className="rounded border px-1 font-mono">K</kbd> on any page to jump here.
+          </p>
+        </div>
 
         {query && groups.length === 0 && (
           <p className="text-muted">No matches for &quot;{query}&quot;.</p>
@@ -270,31 +289,51 @@ export default async function SearchPage({
               <section key={node.id} className="flex flex-col gap-2">
                 <h2 className="text-sm font-semibold tracking-wide text-muted uppercase">{node.title}</h2>
 
-                {lessonMatches.map((lesson) => (
-                  <Link
-                    key={lesson.id}
-                    href={`/lessons/${lesson.id}`}
-                    className="flex items-center justify-between rounded-xl border bg-surface px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
-                  >
-                    <span className="font-medium">📖 {lesson.title}</span>
-                    <span className="text-muted">→</span>
-                  </Link>
-                ))}
+                {lessonMatches.map((lesson) => {
+                  // Only worth a preview when the title itself didn't match —
+                  // otherwise the highlighted title already says why.
+                  const snippet = matchText(lesson.title, query) ? null : snippetAround(lesson.content_md, query);
+                  return (
+                    <Link
+                      key={lesson.id}
+                      href={`/lessons/${lesson.id}`}
+                      className="flex items-start justify-between gap-3 rounded-xl border bg-surface px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
+                    >
+                      <span className="min-w-0">
+                        <span className="font-medium">
+                          📖 <Highlight text={lesson.title} query={query} />
+                        </span>
+                        {snippet && (
+                          <span className="mt-1 block text-sm text-muted">
+                            <Highlight text={snippet} query={query} />
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-muted">→</span>
+                    </Link>
+                  );
+                })}
 
                 {exerciseMatches.length > 0 && (
                   <Link
                     href={`/node/${node.id}`}
-                    className="flex flex-col gap-2 rounded-xl border bg-surface px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
+                    className="flex flex-col gap-2.5 rounded-xl border bg-surface px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
                   >
                     {exerciseMatches.map(({ exercise, kind }) => (
-                      <div key={exercise.id} className="flex items-center gap-2 text-sm">
-                        <span className="rounded-md bg-surface-2 px-2 py-0.5 text-xs">
-                          {TYPE_LABEL[exercise.type]}
-                        </span>
-                        <span className="truncate">
-                          {kind === "concept"
-                            ? `matched concept in: ${getExercisePrompt(exercise)}`
-                            : getExercisePrompt(exercise)}
+                      <div key={exercise.id} className="flex flex-col gap-1 text-sm">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="rounded-md bg-surface-2 px-2 py-0.5 text-xs">
+                            {TYPE_LABEL[exercise.type]}
+                          </span>
+                          {kind === "concept" &&
+                            matchedConcepts(exercise, query).map((concept) => (
+                              <span key={concept} className="rounded-md border px-1.5 py-0.5 text-xs text-muted">
+                                <Highlight text={concept} query={query} />
+                              </span>
+                            ))}
+                        </div>
+                        <span className="line-clamp-2">
+                          <Highlight text={getExercisePrompt(exercise)} query={query} />
                         </span>
                       </div>
                     ))}
@@ -305,6 +344,7 @@ export default async function SearchPage({
           </div>
         )}
       </main>
+      </PageTransition>
     </>
   );
 }
