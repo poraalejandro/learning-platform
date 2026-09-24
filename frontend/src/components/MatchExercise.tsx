@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { recordAttempt, recomputeNodeStatus } from "@/lib/progress";
-import { flagIfStruggling, maybeAdvanceOnRetry } from "@/lib/mistakes";
-import { celebrate } from "@/lib/confetti";
+import { recordAttempt } from "@/lib/progress";
+import { flagIfStruggling } from "@/lib/mistakes";
+import { handleGatingPass } from "@/lib/game";
+import { pointFromClick, type Point } from "@/lib/fx";
 import type { MatchContent } from "@/lib/exercises";
 import { NextExerciseLink } from "@/components/NextExerciseLink";
 
@@ -38,7 +39,7 @@ export function MatchExercise({
   const [shakeDefinition, setShakeDefinition] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
-  async function handleDefinitionClick(definition: string) {
+  async function handleDefinitionClick(definition: string, origin?: Point) {
     if (!selectedTerm || done) return;
 
     const isCorrect = definitionByTerm.get(selectedTerm) === definition;
@@ -50,10 +51,7 @@ export function MatchExercise({
 
       if (updated.size === content.pairs.length) {
         setDone(true);
-        celebrate();
-        await recordAttempt({ exerciseId, status: "passed" });
-        await recomputeNodeStatus(nodeId);
-        await maybeAdvanceOnRetry(exerciseId);
+        await handleGatingPass({ exerciseId, nodeId, origin });
       }
     } else {
       setShakeDefinition(definition);
@@ -98,7 +96,7 @@ export function MatchExercise({
             return (
               <button
                 key={definition}
-                onClick={() => handleDefinitionClick(definition)}
+                onClick={(e) => handleDefinitionClick(definition, pointFromClick(e))}
                 disabled={isMatched || !selectedTerm}
                 className={`rounded-lg border px-3 py-2 text-left text-sm transition-all duration-150 active:scale-95 ${
                   isMatched

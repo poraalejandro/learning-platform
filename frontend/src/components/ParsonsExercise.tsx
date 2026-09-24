@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { recordAttempt, recomputeNodeStatus } from "@/lib/progress";
-import { flagIfStruggling, maybeAdvanceOnRetry } from "@/lib/mistakes";
-import { celebrate } from "@/lib/confetti";
+import { recordAttempt } from "@/lib/progress";
+import { flagIfStruggling } from "@/lib/mistakes";
+import { handleGatingPass } from "@/lib/game";
+import { pointFromClick, type Point } from "@/lib/fx";
 import type { ParsonsContent } from "@/lib/exercises";
 import { NextExerciseLink } from "@/components/NextExerciseLink";
 
@@ -43,15 +44,13 @@ export function ParsonsExercise({
     setChecked(null);
   }
 
-  async function handleCheck() {
+  async function handleCheck(origin?: Point) {
     const isCorrect = lines.every((line, i) => line === content.lines[i]);
     setChecked(isCorrect);
-    await recordAttempt({ exerciseId, status: isCorrect ? "passed" : "failed" });
     if (isCorrect) {
-      celebrate();
-      await recomputeNodeStatus(nodeId);
-      await maybeAdvanceOnRetry(exerciseId);
+      await handleGatingPass({ exerciseId, nodeId, origin });
     } else {
+      await recordAttempt({ exerciseId, status: "failed" });
       await flagIfStruggling(exerciseId, "failed");
     }
   }
@@ -98,7 +97,7 @@ export function ParsonsExercise({
 
       <div className="flex flex-wrap gap-2">
         <button
-          onClick={handleCheck}
+          onClick={(e) => handleCheck(pointFromClick(e))}
           className="rounded-lg bg-primary px-3 py-2 text-sm text-white transition-all duration-150 hover:brightness-110 active:scale-95"
         >
           Check order

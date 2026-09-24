@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { recordAttempt, recomputeNodeStatus } from "@/lib/progress";
-import { flagIfStruggling, maybeAdvanceOnRetry } from "@/lib/mistakes";
-import { celebrate } from "@/lib/confetti";
+import { recordAttempt } from "@/lib/progress";
+import { flagIfStruggling } from "@/lib/mistakes";
+import { handleGatingPass } from "@/lib/game";
+import { pointFromClick, type Point } from "@/lib/fx";
 import type { PredictOutputContent } from "@/lib/exercises";
 import { NextExerciseLink } from "@/components/NextExerciseLink";
 
@@ -29,22 +30,16 @@ export function PredictOutputExercise({
 
   const finished = solved || revealed;
 
-  async function handleCheck() {
+  async function handleCheck(origin?: Point) {
     const isCorrect = prediction.trim() === content.expected_output.trim();
-    await recordAttempt({
-      exerciseId,
-      status: isCorrect ? "passed" : "failed",
-      submittedCode: prediction,
-    });
 
     if (isCorrect) {
       setSolved(true);
-      celebrate();
-      await recomputeNodeStatus(nodeId);
-      await maybeAdvanceOnRetry(exerciseId);
+      await handleGatingPass({ exerciseId, nodeId, submittedCode: prediction, origin });
     } else {
       setShowWrong(true);
       setWrongAttempts((n) => n + 1);
+      await recordAttempt({ exerciseId, status: "failed", submittedCode: prediction });
       await flagIfStruggling(exerciseId, "failed");
     }
   }
@@ -78,7 +73,7 @@ export function PredictOutputExercise({
       {!finished && (
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={handleCheck}
+            onClick={(e) => handleCheck(pointFromClick(e))}
             disabled={!prediction}
             className="rounded-lg bg-primary px-3 py-2 text-sm text-white transition-all duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
           >
