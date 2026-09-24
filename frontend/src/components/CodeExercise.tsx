@@ -1,31 +1,44 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
-import { runTests, type TestResult } from "@/lib/pyodide";
-import { recordAttempt, recomputeNodeStatus } from "@/lib/progress";
-import { flagIfStruggling, maybeAdvanceOnRetry } from "@/lib/mistakes";
+import { keymap } from "@codemirror/view";
+import { Prec } from "@codemirror/state";
+import { getPyodide, getRuntimeStatus, runTests, subscribeRuntime, type TestResult } from "@/lib/pyodide";
+import { recordAttempt } from "@/lib/progress";
+import { flagIfStruggling } from "@/lib/mistakes";
+import { handleGatingPass } from "@/lib/game";
 import { requestHint, TutorError } from "@/lib/tutor";
-import { celebrate } from "@/lib/confetti";
+import { centerOf, pointFromClick, type Point } from "@/lib/fx";
+import { getEffectiveTheme, subscribeTheme } from "@/lib/theme";
+import { XP_HINT_COST } from "@/lib/xp";
 import type { CodeContent } from "@/lib/exercises";
 import { NextExerciseLink } from "@/components/NextExerciseLink";
 
 const MAX_HINT_LEVEL = 3;
+const RUNG_LABELS = ["Conceptual", "Strategy", "Almost code"];
+const RESULT_STAGGER_MS = 90;
 
-function subscribeToColorScheme(callback: () => void) {
-  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-  mediaQuery.addEventListener("change", callback);
-  return () => mediaQuery.removeEventListener("change", callback);
-}
-
-function getColorScheme(): "light" | "dark" {
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
-function getServerColorScheme(): "light" | "dark" {
-  return "light";
-}
+// Ctrl/⌘+Enter inside the editor. The extension is module-level (built
+// once, no component state captured): it only announces the keypress as a
+// DOM event, and the component — which owns the current code — listens for
+// it and runs. Keeps CodeMirror's config static across renders.
+const RUN_EVENT = "pyquest:run-code";
+const EDITOR_EXTENSIONS = [
+  python(),
+  Prec.highest(
+    keymap.of([
+      {
+        key: "Mod-Enter",
+        run: (view) => {
+          view.dom.dispatchEvent(new CustomEvent(RUN_EVENT, { bubbles: true }));
+          return true;
+        },
+      },
+    ]),
+  ),
+];
 
 export function CodeExercise({
   exerciseId,
@@ -45,20 +58,30 @@ export function CodeExercise({
   const [hintLoading, setHintLoading] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const [passed, setPassed] = useState(false);
+  const [flashKey, setFlashKey] = useState(0);
+  const runButtonRef = useRef<HTMLButtonElement>(null);
 
   const hintLevel = hints.length;
   const maxLevel = Math.min(MAX_HINT_LEVEL, content.hints.length);
 
   // CodeMirror needs an explicit theme: left unset, its default light theme's
-  // dark text ends up on this page's dark-mode background (inherited, not
-  // set by CodeMirror itself) — dark-on-dark, unreadable. useSyncExternalStore
-  // (not useEffect+useState) is the correct tool for reading a live external
-  // value like this: it reads synchronously during render, so there's no
-  // extra render-then-correct flash, and getServerColorScheme keeps the
-  // server-rendered pass (no `window`) from crashing.
-  const editorTheme = useSyncExternalStore(subscribeToColorScheme, getColorScheme, getServerColorScheme);
+  // dark text lands on the page's dark background. Follows the app theme
+  // (manual toggle or OS), read synchronously so there's no wrong-theme flash.
+  const editorTheme = useSyncExternalStore(subscribeTheme, getEffectiveTheme, () => "light" as const);
 
-  async function handleRun() {
+  // The first Run on a device downloads ~10 MB of Python runtime. Starting
+  // that the moment the exercise opens (instead of on the first click) means
+  // it's usually done before the student finishes reading the prompt — and
+  // the status below says what's happening if it isn't.
+  const runtime = useSyncExternalStore(subscribeRuntime, getRuntimeStatus, () => "idle" as const);
+  useEffect(() => {
+    getPyodide().catch(() => {
+      // surfaced through the runtime status; Run retries the load
+    });
+  }, []);
+
+  async function handleRun(origin?: Point) {
+    if (running) return;
     setRunning(true);
     setResults(null);
     try {
@@ -67,23 +90,48 @@ export function CodeExercise({
 
       const allPassed = testResults.every((r) => r.passed);
       setPassed(allPassed);
-      await recordAttempt({
-        exerciseId,
-        status: allPassed ? "passed" : "failed",
-        submittedCode: code,
-        hintsUsed: hintLevel,
-      });
       if (allPassed) {
-        celebrate();
-        await recomputeNodeStatus(nodeId);
-        await maybeAdvanceOnRetry(exerciseId);
+        setFlashKey((k) => k + 1);
+        await handleGatingPass({
+          exerciseId,
+          nodeId,
+          hintsUsed: hintLevel,
+          submittedCode: code,
+          origin: origin ?? centerOf(runButtonRef.current),
+        });
       } else {
+        await recordAttempt({ exerciseId, status: "failed", submittedCode: code, hintsUsed: hintLevel });
         await flagIfStruggling(exerciseId, "failed");
       }
+    } catch {
+      setResults([
+        {
+          call: "",
+          expected: "",
+          actual: "",
+          passed: false,
+          error: "Couldn't start the Python runtime — check your connection and try again.",
+        },
+      ]);
     } finally {
       setRunning(false);
     }
   }
+
+  // The listener is attached once; the ref gives it the latest handleRun
+  // (which closes over the current code), not the one from the first render.
+  const editorWrapRef = useRef<HTMLDivElement>(null);
+  const runRef = useRef(handleRun);
+  useEffect(() => {
+    runRef.current = handleRun;
+  });
+  useEffect(() => {
+    const wrap = editorWrapRef.current;
+    if (!wrap) return;
+    const onRun = () => void runRef.current();
+    wrap.addEventListener(RUN_EVENT, onRun);
+    return () => wrap.removeEventListener(RUN_EVENT, onRun);
+  }, []);
 
   async function handleRequestHint() {
     setHintLoading(true);
@@ -113,53 +161,80 @@ export function CodeExercise({
     await flagIfStruggling(exerciseId, "revealed");
   }
 
+  const runtimeLoading = runtime === "loading";
+  const flashDelay = (results?.length ?? 0) * RESULT_STAGGER_MS;
+
   return (
     <div className="flex flex-col gap-4">
       <p className="whitespace-pre-wrap">{content.prompt}</p>
 
-      <CodeMirror
-        value={code}
-        height="220px"
-        theme={editorTheme}
-        extensions={[python()]}
-        onChange={(value) => setCode(value)}
-      />
+      {(runtimeLoading || runtime === "error") && (
+        <div className="animate-rise-in flex flex-col gap-1.5 rounded-lg border bg-surface-2 px-3 py-2 text-xs text-muted">
+          <span>
+            {runtimeLoading
+              ? "Loading the Python runtime — only the first time on this device (~10 MB)…"
+              : "Couldn't load the Python runtime. Check your connection; Run will try again."}
+          </span>
+          {runtimeLoading && (
+            <span className="block h-1 overflow-hidden rounded-full bg-border">
+              <span className="animate-indeterminate block h-full w-2/5 rounded-full bg-primary" />
+            </span>
+          )}
+        </div>
+      )}
 
-      <div className="flex flex-wrap gap-2">
+      <div ref={editorWrapRef} className="relative">
+        <CodeMirror
+          value={code}
+          height="220px"
+          theme={editorTheme}
+          extensions={EDITOR_EXTENSIONS}
+          onChange={(value) => setCode(value)}
+        />
+        {flashKey > 0 && (
+          <div
+            key={flashKey}
+            aria-hidden
+            className="animate-success-flash pointer-events-none absolute inset-0 rounded ring-2 ring-success"
+            style={{
+              animationDelay: `${flashDelay}ms`,
+              backgroundColor: "color-mix(in srgb, var(--success) 14%, transparent)",
+            }}
+          />
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
         <button
-          onClick={handleRun}
-          disabled={running}
+          ref={runButtonRef}
+          onClick={(e) => handleRun(pointFromClick(e))}
+          disabled={running || runtimeLoading}
           className="rounded-lg bg-primary px-3 py-2 text-sm text-white transition-all duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
         >
-          {running ? "Running..." : "▶ Run"}
+          {runtimeLoading ? "Loading Python…" : running ? "Running..." : "▶ Run"}
         </button>
-        {hintLevel < maxLevel && (
-          <button
-            onClick={handleRequestHint}
-            disabled={hintLoading}
-            className="rounded-lg border px-3 py-2 text-sm transition-all duration-150 hover:bg-surface-2 active:scale-95 disabled:opacity-50 "
-          >
-            {hintLoading ? "Thinking..." : `💡 Hint (${hintLevel}/${maxLevel})`}
-          </button>
-        )}
         {!showSolution && (
           <button
             onClick={handleRevealSolution}
-            className="rounded-lg border px-3 py-2 text-sm transition-all duration-150 hover:bg-surface-2 active:scale-95 "
+            className="rounded-lg border px-3 py-2 text-sm transition-all duration-150 hover:bg-surface-2 active:scale-95"
           >
             🏳 Reveal solution
           </button>
         )}
+        <span className="ml-auto hidden text-xs text-muted pointer-fine:inline">
+          <kbd className="rounded border px-1 font-mono">Ctrl</kbd>/<kbd className="rounded border px-1 font-mono">⌘</kbd> +{" "}
+          <kbd className="rounded border px-1 font-mono">Enter</kbd> to run
+        </span>
       </div>
 
-      {hints.length > 0 && (
-        <ul className="flex flex-col gap-1 rounded-lg border border-accent/40 bg-accent-light p-3 text-sm">
-          {hints.map((hint, i) => (
-            <li key={i} className="animate-pop-in">
-              💡 {hint.text}
-            </li>
-          ))}
-        </ul>
+      {maxLevel > 0 && (
+        <HintLadder
+          hints={hints}
+          maxLevel={maxLevel}
+          loading={hintLoading}
+          disabled={passed}
+          onUnlock={handleRequestHint}
+        />
       )}
 
       {results && (
@@ -167,9 +242,14 @@ export function CodeExercise({
           {results.map((result, i) => (
             <li
               key={i}
-              className={result.passed ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}
+              className={`animate-rise-in ${result.passed ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+              style={{ animationDelay: `${i * RESULT_STAGGER_MS}ms` }}
             >
-              {result.passed ? "✅" : "❌"} {result.call} → {result.error ?? result.actual}
+              <span className="inline-block animate-pop-in" style={{ animationDelay: `${i * RESULT_STAGGER_MS + 60}ms` }}>
+                {result.passed ? "✅" : "❌"}
+              </span>{" "}
+              {result.call && <>{result.call} → </>}
+              {result.error ?? result.actual}
               {!result.passed && !result.error && ` (expected: ${result.expected})`}
             </li>
           ))}
@@ -178,7 +258,10 @@ export function CodeExercise({
 
       {passed && (
         <>
-          <p className="animate-pop-in font-medium text-green-600 dark:text-green-400">
+          <p
+            className="animate-pop-in font-medium text-green-600 dark:text-green-400"
+            style={{ animationDelay: `${flashDelay}ms` }}
+          >
             ✅ Correct! Progress saved.
           </p>
           <NextExerciseLink nodeId={nodeId} nextHref={nextHref} />
@@ -186,10 +269,71 @@ export function CodeExercise({
       )}
 
       {showSolution && (
-        <pre className="overflow-x-auto rounded-lg border bg-surface-2 p-3 text-sm">
-          {content.solution}
-        </pre>
+        <pre className="animate-rise-in overflow-x-auto rounded-lg border bg-surface-2 p-3 text-sm">{content.solution}</pre>
       )}
     </div>
+  );
+}
+
+/**
+ * The hint ladder (docs/architecture.md §3): each rung gives away more than
+ * the last, and only the next locked rung can be opened — so a student can't
+ * skip straight to "almost code". Each one opened lowers the XP this
+ * exercise pays out (lib/xp.ts), which is why the cost is on the button.
+ */
+function HintLadder({
+  hints,
+  maxLevel,
+  loading,
+  disabled,
+  onUnlock,
+}: {
+  hints: { text: string; isFallback: boolean }[];
+  maxLevel: number;
+  loading: boolean;
+  disabled: boolean;
+  onUnlock: () => void;
+}) {
+  return (
+    <ol className="flex flex-col gap-1.5 rounded-lg border border-accent/40 bg-accent-light p-3 text-sm" aria-label="Hints">
+      <li className="mb-0.5 text-xs font-semibold tracking-wide text-accent uppercase">💡 Hints</li>
+      {Array.from({ length: maxLevel }, (_, i) => {
+        const unlocked = i < hints.length;
+        const isNext = i === hints.length;
+        return (
+          <li
+            key={i}
+            className={`flex items-start gap-2 rounded-md px-2 py-1.5 transition-colors duration-200 ${
+              unlocked ? "bg-surface/70" : ""
+            }`}
+          >
+            <span
+              aria-hidden
+              className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                unlocked ? "animate-pop-in bg-accent text-neutral-900" : "border border-accent/50 text-muted"
+              }`}
+            >
+              {unlocked ? i + 1 : "🔒"}
+            </span>
+            <div className="min-w-0 flex-1">
+              <span className="text-xs font-medium text-muted">{RUNG_LABELS[i] ?? `Hint ${i + 1}`}</span>
+              {unlocked ? (
+                <p className="animate-rise-in">{hints[i].text}</p>
+              ) : isNext && !disabled ? (
+                <button
+                  onClick={onUnlock}
+                  disabled={loading}
+                  className="mt-1 block rounded-md border border-accent/50 px-2 py-1 text-xs transition-all duration-150 hover:bg-surface active:scale-95 disabled:opacity-50"
+                >
+                  {loading ? "Thinking…" : `Unlock (−${XP_HINT_COST} XP)`}
+                </button>
+              ) : (
+                <p className="text-xs text-muted">Locked</p>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
   );
 }

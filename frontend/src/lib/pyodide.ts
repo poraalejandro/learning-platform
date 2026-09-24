@@ -23,6 +23,29 @@ declare global {
 
 let pyodidePromise: Promise<PyodideInterface> | null = null;
 
+/**
+ * Observable load state, so the UI can say "downloading the Python runtime"
+ * on the one slow first run instead of a Run button that just seems stuck.
+ * Shaped for useSyncExternalStore.
+ */
+export type RuntimeStatus = "idle" | "loading" | "ready" | "error";
+let runtimeStatus: RuntimeStatus = "idle";
+const runtimeListeners = new Set<() => void>();
+
+function setRuntimeStatus(next: RuntimeStatus) {
+  runtimeStatus = next;
+  runtimeListeners.forEach((listener) => listener());
+}
+
+export function getRuntimeStatus(): RuntimeStatus {
+  return runtimeStatus;
+}
+
+export function subscribeRuntime(listener: () => void): () => void {
+  runtimeListeners.add(listener);
+  return () => runtimeListeners.delete(listener);
+}
+
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const script = document.createElement("script");
@@ -36,10 +59,23 @@ function loadScript(src: string): Promise<void> {
 /** Loads Pyodide once and reuses the same instance for every exercise opened afterwards. */
 export function getPyodide(): Promise<PyodideInterface> {
   if (!pyodidePromise) {
-    pyodidePromise = loadScript(`${PYODIDE_CDN_BASE}pyodide.js`).then(() => {
-      if (!window.loadPyodide) throw new Error("Pyodide script loaded but loadPyodide is missing");
-      return window.loadPyodide({ indexURL: PYODIDE_CDN_BASE });
-    });
+    setRuntimeStatus("loading");
+    pyodidePromise = loadScript(`${PYODIDE_CDN_BASE}pyodide.js`)
+      .then(() => {
+        if (!window.loadPyodide) throw new Error("Pyodide script loaded but loadPyodide is missing");
+        return window.loadPyodide({ indexURL: PYODIDE_CDN_BASE });
+      })
+      .then((pyodide) => {
+        setRuntimeStatus("ready");
+        return pyodide;
+      })
+      .catch((error) => {
+        // Forget the failed promise so the next Run retries instead of
+        // replaying the same rejection forever.
+        pyodidePromise = null;
+        setRuntimeStatus("error");
+        throw error;
+      });
   }
   return pyodidePromise;
 }
