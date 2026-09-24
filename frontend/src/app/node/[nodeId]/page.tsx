@@ -5,6 +5,7 @@ import { computeNodeStatuses, type SkillNode } from "@/lib/skillTree";
 import { fetchTreeProgress } from "@/lib/treeProgress";
 import { GATING_EXERCISE_TYPES, type Exercise, type ExerciseType } from "@/lib/exercises";
 import { Navbar } from "@/components/Navbar";
+import { PageTransition } from "@/components/PageTransition";
 
 const TYPE_LABEL: Record<ExerciseType, string> = {
   code: "Code",
@@ -91,6 +92,7 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
   return (
     <>
       <Navbar userEmail={user.email ?? ""} active="tree" />
+      <PageTransition>
       <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6 py-10">
         <div>
           <Link href="/" className="text-sm text-primary underline transition-opacity hover:opacity-75">
@@ -149,6 +151,7 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
           <p className="text-muted">No exercises for this node yet.</p>
         )}
       </main>
+      </PageTransition>
     </>
   );
 }

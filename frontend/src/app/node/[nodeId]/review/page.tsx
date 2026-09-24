@@ -7,6 +7,7 @@ import type { Exercise } from "@/lib/exercises";
 import type { SrsCard } from "@/lib/sm2";
 import { FlashcardSession } from "@/components/FlashcardSession";
 import { Navbar } from "@/components/Navbar";
+import { PageTransition } from "@/components/PageTransition";
 
 export default async function ReviewPage({ params }: { params: Promise<{ nodeId: string }> }) {
   const { nodeId } = await params;
@@ -60,6 +61,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ nodeId:
   return (
     <>
       <Navbar userEmail={user.email ?? ""} active="tree" />
+      <PageTransition>
       <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6 py-10">
         <Link href={`/node/${nodeId}`} className="text-sm text-primary underline transition-opacity hover:opacity-75">
           ← Back to exercises
@@ -77,6 +79,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ nodeId:
           <FlashcardSession nodeId={nodeId} items={dueQueue} />
         )}
       </main>
+      </PageTransition>
     </>
   );
 }

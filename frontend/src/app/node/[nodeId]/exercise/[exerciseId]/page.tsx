@@ -14,6 +14,7 @@ import { PredictOutputExercise } from "@/components/PredictOutputExercise";
 import { MatchExercise } from "@/components/MatchExercise";
 import { ParsonsExercise } from "@/components/ParsonsExercise";
 import { Navbar } from "@/components/Navbar";
+import { PageTransition } from "@/components/PageTransition";
 
 export default async function ExercisePage({
   params,
@@ -72,6 +73,7 @@ export default async function ExercisePage({
   return (
     <>
       <Navbar userEmail={user.email ?? ""} active="tree" />
+      <PageTransition>
       <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6 py-10">
         <Link href={`/node/${nodeId}`} className="text-sm text-primary underline transition-opacity hover:opacity-75">
           ← Back to exercises
@@ -113,6 +115,7 @@ export default async function ExercisePage({
           />
         )}
       </main>
+      </PageTransition>
     </>
   );
 }

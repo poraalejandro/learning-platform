@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/Navbar";
+import { PageTransition } from "@/components/PageTransition";
 import { LessonContent } from "@/components/LessonContent";
 
 export default async function LessonPage({ params }: { params: Promise<{ lessonId: string }> }) {
@@ -29,6 +30,7 @@ export default async function LessonPage({ params }: { params: Promise<{ lessonI
   return (
     <>
       <Navbar userEmail={user.email ?? ""} active="lessons" />
+      <PageTransition>
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
         <div>
           <Link href="/lessons" className="text-sm text-primary underline transition-opacity hover:opacity-75">
@@ -47,6 +49,7 @@ export default async function LessonPage({ params }: { params: Promise<{ lessonI
 
         <LessonContent markdown={lesson.content_md} />
       </main>
+      </PageTransition>
     </>
   );
 }

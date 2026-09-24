@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/Navbar";
+import { PageTransition } from "@/components/PageTransition";
 import type { Lesson } from "@/lib/lessons";
 import type { SkillNode } from "@/lib/skillTree";
 
@@ -36,6 +37,7 @@ export default async function LessonsPage() {
   return (
     <>
       <Navbar userEmail={user.email ?? ""} active="lessons" />
+      <PageTransition>
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-6 py-10">
         <div className="animate-rise-in">
           <h1 className="text-2xl font-semibold">Lessons</h1>
@@ -67,6 +69,7 @@ export default async function LessonsPage() {
           </div>
         )}
       </main>
+      </PageTransition>
     </>
   );
 }
