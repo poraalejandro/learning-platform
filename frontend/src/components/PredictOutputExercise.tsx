@@ -8,6 +8,17 @@ import { pointFromClick, type Point } from "@/lib/fx";
 import type { PredictOutputContent } from "@/lib/exercises";
 import { NextExerciseLink } from "@/components/NextExerciseLink";
 
+// Compares output the way you'd eyeball a terminal: same lines, ignoring
+// trailing spaces and blank lines at the ends, and Windows line endings.
+function normalizeOutput(text: string) {
+  return text
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .map((line) => line.trimEnd())
+    .join("\n")
+    .trim();
+}
+
 export function PredictOutputExercise({
   exerciseId,
   nodeId,
@@ -31,7 +42,7 @@ export function PredictOutputExercise({
   const finished = solved || revealed;
 
   async function handleCheck(origin?: Point) {
-    const isCorrect = prediction.trim() === content.expected_output.trim();
+    const isCorrect = normalizeOutput(prediction) === normalizeOutput(content.expected_output);
 
     if (isCorrect) {
       setSolved(true);
@@ -57,16 +68,20 @@ export function PredictOutputExercise({
       <pre className="overflow-x-auto rounded-lg border bg-surface-2 p-3 text-sm">{content.code}</pre>
 
       <label className="flex flex-col gap-1 text-sm">
-        What do you think this code prints or returns?
-        <input
-          type="text"
+        What do you think this code prints or returns? One line per printed line.
+        {/* A textarea, not an input: many programs print several lines, and a
+            single-line input made those exercises impossible to answer. The
+            fixed height avoids hinting how many lines the answer has. */}
+        <textarea
+          rows={3}
+          spellCheck={false}
           value={prediction}
           onChange={(e) => {
             setPrediction(e.target.value);
             setShowWrong(false);
           }}
           disabled={finished}
-          className="rounded-lg border bg-background px-3 py-2 transition-colors outline-none focus:border-primary disabled:opacity-60"
+          className="resize-y rounded-lg border bg-background px-3 py-2 font-mono text-sm transition-colors outline-none focus:border-primary disabled:opacity-60"
         />
       </label>
 
@@ -104,9 +119,8 @@ export function PredictOutputExercise({
             solved ? "border-success/40 bg-tint-success" : "border-border bg-surface-2"
           }`}
         >
-          <p className="font-medium">
-            {solved ? "✅ Correct!" : `The actual output is: ${content.expected_output}`}
-          </p>
+          <p className="font-medium">{solved ? "✅ Correct!" : "The actual output is:"}</p>
+          {!solved && <pre className="mt-1 overflow-x-auto font-mono">{content.expected_output}</pre>}
           {content.explanation && <p className="mt-1 text-muted">{content.explanation}</p>}
         </div>
       )}
