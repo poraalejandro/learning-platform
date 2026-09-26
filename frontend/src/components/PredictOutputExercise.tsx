@@ -23,11 +23,13 @@ export function PredictOutputExercise({
   exerciseId,
   nodeId,
   nextHref,
+  doneHref,
   content,
 }: {
   exerciseId: string;
   nodeId: string;
   nextHref: string | null;
+  doneHref?: string;
   content: PredictOutputContent;
 }) {
   const [prediction, setPrediction] = useState("");
@@ -125,7 +127,7 @@ export function PredictOutputExercise({
         </div>
       )}
 
-      {solved && <NextExerciseLink nodeId={nodeId} nextHref={nextHref} />}
+      {solved && <NextExerciseLink nodeId={nodeId} nextHref={nextHref} doneHref={doneHref} />}
     </div>
   );
 }

@@ -5,8 +5,29 @@ import Link from "next/link";
  * auto-advance inside their review session; these take real work, so
  * moving on is a deliberate click — you may want to sit with the solution
  * first. `nextHref` is null when nothing is left unsolved in this node.
+ * Inside a mistakes-review run `doneHref` is set: the queue is the "node",
+ * so finishing it goes back to the review page, not to the exercise's node.
  */
-export function NextExerciseLink({ nodeId, nextHref }: { nodeId: string; nextHref: string | null }) {
+export function NextExerciseLink({
+  nodeId,
+  nextHref,
+  doneHref,
+}: {
+  nodeId: string;
+  nextHref: string | null;
+  doneHref?: string;
+}) {
+  if (!nextHref && doneHref) {
+    return (
+      <Link
+        href={doneHref}
+        className="animate-pop-in self-start rounded-lg border border-success/50 bg-tint-success px-4 py-2.5 text-sm font-medium transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-95"
+      >
+        🎉 Review finished — back to your mistakes
+      </Link>
+    );
+  }
+
   if (!nextHref) {
     return (
       <Link

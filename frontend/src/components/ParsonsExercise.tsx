@@ -21,11 +21,13 @@ export function ParsonsExercise({
   exerciseId,
   nodeId,
   nextHref,
+  doneHref,
   content,
 }: {
   exerciseId: string;
   nodeId: string;
   nextHref: string | null;
+  doneHref?: string;
   content: ParsonsContent;
 }) {
   // Reordered with up/down buttons rather than drag-and-drop: native HTML5
@@ -120,7 +122,7 @@ export function ParsonsExercise({
         </p>
       )}
 
-      {checked === true && <NextExerciseLink nodeId={nodeId} nextHref={nextHref} />}
+      {checked === true && <NextExerciseLink nodeId={nodeId} nextHref={nextHref} doneHref={doneHref} />}
     </div>
   );
 }

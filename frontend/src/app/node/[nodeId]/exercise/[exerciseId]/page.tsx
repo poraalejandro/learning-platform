@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { exerciseHref, fetchDueMistakes, mistakesHref, parseScope } from "@/lib/mistakesQueue";
 import {
   GATING_EXERCISE_TYPES,
   type CodeContent,
@@ -18,10 +19,16 @@ import { PageTransition } from "@/components/PageTransition";
 
 export default async function ExercisePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ nodeId: string; exerciseId: string }>;
+  searchParams: Promise<{ review?: string }>;
 }) {
   const { nodeId, exerciseId } = await params;
+  const { review } = await searchParams;
+  // Set when the exercise was opened from the mistakes review: "Next" then
+  // walks that queue instead of this node's pending exercises.
+  const reviewScope = review === undefined ? null : parseScope(review);
   const supabase = await createClient();
   const {
     data: { user },
@@ -46,37 +53,55 @@ export default async function ExercisePage({
     redirect(`/node/${nodeId}/review`);
   }
 
-  // Where "Next exercise" goes once this one is solved: the next
-  // exercise in this node the user hasn't passed yet, wrapping back to the
-  // start if the remaining ones are behind the current position. Null means
-  // there's nothing left to do in this node.
-  const [{ data: siblings }, { data: passedAttempts }] = await Promise.all([
-    supabase
-      .from("exercises")
-      .select("id, position")
-      .eq("node_id", nodeId)
-      .in("type", GATING_EXERCISE_TYPES)
-      .order("position"),
-    supabase
-      .from("exercise_attempts")
-      .select("exercise_id")
-      .eq("user_id", user.id)
-      .eq("status", "passed"),
-  ]);
+  let nextHref: string | null;
+  let doneHref: string | undefined;
 
-  const passedIds = new Set((passedAttempts ?? []).map((a) => a.exercise_id));
-  const pending = (siblings ?? []).filter((e) => e.id !== exerciseId && !passedIds.has(e.id));
-  const nextExercise =
-    pending.find((e) => e.position > typedExercise.position) ?? pending[0] ?? null;
-  const nextHref = nextExercise ? `/node/${nodeId}/exercise/${nextExercise.id}` : null;
+  if (reviewScope) {
+    // The queue is the due mistakes in this scope, in tree order. Next is
+    // the one after this in that order; past the end it wraps to any still
+    // unfinished earlier ones; null (→ doneHref) means the queue is clear.
+    const { due } = await fetchDueMistakes(supabase, user.id);
+    const queue = reviewScope === "all" ? due : due.filter((item) => item.section === reviewScope);
+    const index = queue.findIndex((item) => item.exerciseId === exerciseId);
+    const next = (index >= 0 ? queue[index + 1] : undefined) ?? queue.find((item) => item.exerciseId !== exerciseId);
+    nextHref = next ? exerciseHref(next, reviewScope) : null;
+    doneHref = mistakesHref(reviewScope);
+  } else {
+    // Where "Next exercise" goes once this one is solved: the next
+    // exercise in this node the user hasn't passed yet, wrapping back to the
+    // start if the remaining ones are behind the current position. Null means
+    // there's nothing left to do in this node.
+    const [{ data: siblings }, { data: passedAttempts }] = await Promise.all([
+      supabase
+        .from("exercises")
+        .select("id, position")
+        .eq("node_id", nodeId)
+        .in("type", GATING_EXERCISE_TYPES)
+        .order("position"),
+      supabase
+        .from("exercise_attempts")
+        .select("exercise_id")
+        .eq("user_id", user.id)
+        .eq("status", "passed"),
+    ]);
+
+    const passedIds = new Set((passedAttempts ?? []).map((a) => a.exercise_id));
+    const pending = (siblings ?? []).filter((e) => e.id !== exerciseId && !passedIds.has(e.id));
+    const nextExercise =
+      pending.find((e) => e.position > typedExercise.position) ?? pending[0] ?? null;
+    nextHref = nextExercise ? `/node/${nodeId}/exercise/${nextExercise.id}` : null;
+  }
 
   return (
     <>
       <Navbar userEmail={user.email ?? ""} active="tree" />
       <PageTransition>
       <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6 py-10">
-        <Link href={`/node/${nodeId}`} className="text-sm text-primary underline transition-opacity hover:opacity-75">
-          ← Back to exercises
+        <Link
+          href={reviewScope ? mistakesHref(reviewScope) : `/node/${nodeId}`}
+          className="text-sm text-primary underline transition-opacity hover:opacity-75"
+        >
+          {reviewScope ? "← Back to mistakes" : "← Back to exercises"}
         </Link>
 
         {/* fix_bug reuses CodeExercise as-is: same content shape (starter_code
@@ -87,6 +112,7 @@ export default async function ExercisePage({
             exerciseId={exerciseId}
             nodeId={nodeId}
             nextHref={nextHref}
+            doneHref={doneHref}
             content={typedExercise.content as CodeContent}
           />
         )}
@@ -95,6 +121,7 @@ export default async function ExercisePage({
             exerciseId={exerciseId}
             nodeId={nodeId}
             nextHref={nextHref}
+            doneHref={doneHref}
             content={typedExercise.content as PredictOutputContent}
           />
         )}
@@ -103,6 +130,7 @@ export default async function ExercisePage({
             exerciseId={exerciseId}
             nodeId={nodeId}
             nextHref={nextHref}
+            doneHref={doneHref}
             content={typedExercise.content as MatchContent}
           />
         )}
@@ -111,6 +139,7 @@ export default async function ExercisePage({
             exerciseId={exerciseId}
             nodeId={nodeId}
             nextHref={nextHref}
+            doneHref={doneHref}
             content={typedExercise.content as ParsonsContent}
           />
         )}

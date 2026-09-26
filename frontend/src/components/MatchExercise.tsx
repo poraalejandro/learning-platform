@@ -21,11 +21,13 @@ export function MatchExercise({
   exerciseId,
   nodeId,
   nextHref,
+  doneHref,
   content,
 }: {
   exerciseId: string;
   nodeId: string;
   nextHref: string | null;
+  doneHref?: string;
   content: MatchContent;
 }) {
   // Shuffled once per mount, not on every render — recomputing on each
@@ -118,7 +120,7 @@ export function MatchExercise({
           <p className="animate-pop-in font-medium text-green-600 dark:text-green-400">
             ✅ All matched correctly! Progress saved.
           </p>
-          <NextExerciseLink nodeId={nodeId} nextHref={nextHref} />
+          <NextExerciseLink nodeId={nodeId} nextHref={nextHref} doneHref={doneHref} />
         </>
       )}
     </div>

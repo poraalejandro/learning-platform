@@ -97,3 +97,13 @@ export function getExercisePrompt(exercise: Exercise): string {
   const content = exercise.content as { prompt?: string };
   return content.prompt ?? "";
 }
+
+export const EXERCISE_TYPE_LABEL: Record<ExerciseType, string> = {
+  code: "Code",
+  fix_bug: "Fix the bug",
+  predict_output: "Predict the output",
+  match: "Match",
+  parsons: "Reorder lines",
+  flashcard: "Flashcard",
+  recall: "Recall",
+};

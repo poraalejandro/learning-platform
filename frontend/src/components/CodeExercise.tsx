@@ -44,11 +44,13 @@ export function CodeExercise({
   exerciseId,
   nodeId,
   nextHref,
+  doneHref,
   content,
 }: {
   exerciseId: string;
   nodeId: string;
   nextHref: string | null;
+  doneHref?: string;
   content: CodeContent;
 }) {
   const [code, setCode] = useState(content.starter_code);
@@ -264,7 +266,7 @@ export function CodeExercise({
           >
             ✅ Correct! Progress saved.
           </p>
-          <NextExerciseLink nodeId={nodeId} nextHref={nextHref} />
+          <NextExerciseLink nodeId={nodeId} nextHref={nextHref} doneHref={doneHref} />
         </>
       )}
 

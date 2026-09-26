@@ -3,19 +3,9 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { computeNodeStatuses, type SkillNode } from "@/lib/skillTree";
 import { fetchTreeProgress } from "@/lib/treeProgress";
-import { GATING_EXERCISE_TYPES, type Exercise, type ExerciseType } from "@/lib/exercises";
+import { EXERCISE_TYPE_LABEL, GATING_EXERCISE_TYPES, type Exercise } from "@/lib/exercises";
 import { Navbar } from "@/components/Navbar";
 import { PageTransition } from "@/components/PageTransition";
-
-const TYPE_LABEL: Record<ExerciseType, string> = {
-  code: "Code",
-  fix_bug: "Fix the bug",
-  predict_output: "Predict the output",
-  match: "Match",
-  parsons: "Reorder lines",
-  flashcard: "Flashcard",
-  recall: "Recall",
-};
 
 export default async function NodePage({ params }: { params: Promise<{ nodeId: string }> }) {
   const { nodeId } = await params;
@@ -138,7 +128,7 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
             >
               <span>
                 <span className="mr-2 rounded-md bg-surface-2 px-2 py-0.5 text-xs">
-                  {TYPE_LABEL[exercise.type]}
+                  {EXERCISE_TYPE_LABEL[exercise.type]}
                 </span>
                 Exercise {exercise.position}
               </span>

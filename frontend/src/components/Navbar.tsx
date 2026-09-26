@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { signOut } from "@/app/actions";
 import { createClient } from "@/lib/supabase/server";
+import { countDueMistakes } from "@/lib/mistakesQueue";
 import { XpChip } from "@/components/XpChip";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { KeyboardShortcuts } from "@/components/KeyboardShortcuts";
@@ -9,6 +10,7 @@ const NAV_LINKS = [
   { href: "/", label: "Tree", icon: "🌳", key: "tree" },
   { href: "/lessons", label: "Lessons", icon: "📖", key: "lessons" },
   { href: "/search", label: "Search", icon: "🔍", key: "search" },
+  { href: "/mistakes", label: "Mistakes", icon: "🔁", key: "mistakes" },
   { href: "/interview", label: "Interview", icon: "🎤", key: "interview" },
 ] as const;
 
@@ -23,16 +25,19 @@ type NavKey = (typeof NAV_LINKS)[number]["key"];
  *
  * Two layouts: at md+ the links sit in the top bar; below that (phones and
  * small tablets) they move to a fixed bottom tab bar — thumb-reachable, and
- * measured: four links plus the chip, theme and sign-out overflow the top
- * bar below ~770px. The chip and sign-out stay compact until lg for the
+ * measured: five links plus the chip, theme and sign-out only just fit the
+ * top bar at 768px, and even at lg there's no room for link icons or the
+ * signed-in email (it lives in the sign-out button's tooltip; the icons
+ * live in the tab bar). The chip and sign-out stay compact until lg for the
  * same reason.
  */
 export async function Navbar({ userEmail, active }: { userEmail: string; active: NavKey }) {
   const supabase = await createClient();
-  const { data: stats } = await supabase
-    .from("user_stats")
-    .select("xp, streak_count, streak_last_date")
-    .maybeSingle();
+  const [{ data: stats }, dueMistakes] = await Promise.all([
+    supabase.from("user_stats").select("xp, streak_count, streak_last_date").maybeSingle(),
+    countDueMistakes(supabase),
+  ]);
+  const dueLabel = dueMistakes > 99 ? "99+" : String(dueMistakes);
 
   return (
     <>
@@ -61,10 +66,15 @@ export async function Navbar({ userEmail, active }: { userEmail: string; active:
                       : "text-muted hover:bg-surface-2 hover:text-foreground"
                   }`}
                 >
-                  <span aria-hidden className="hidden text-xs lg:inline">
-                    {link.icon}
-                  </span>
                   {link.label}
+                  {link.key === "mistakes" && dueMistakes > 0 && (
+                    <span
+                      className="rounded-full bg-accent px-1.5 text-[10px] leading-4 font-semibold text-neutral-900 tabular-nums"
+                      aria-label={`${dueMistakes} due`}
+                    >
+                      {dueLabel}
+                    </span>
+                  )}
                   {link.key === "search" && (
                     <kbd className="ml-1 hidden rounded border px-1 font-mono text-[10px] leading-4 text-muted lg:pointer-fine:inline">
                       /
@@ -82,12 +92,11 @@ export async function Navbar({ userEmail, active }: { userEmail: string; active:
               initialStreakDate={stats?.streak_last_date ?? null}
             />
             <ThemeToggle />
-            <span className="hidden text-xs text-muted lg:inline">{userEmail}</span>
             <form action={signOut}>
               <button
                 type="submit"
                 aria-label="Sign out"
-                title="Sign out"
+                title={`Sign out (${userEmail})`}
                 className="flex h-8 items-center justify-center rounded-lg border px-2 text-sm whitespace-nowrap text-muted transition-all duration-150 hover:bg-surface-2 hover:text-foreground active:scale-95 lg:px-3"
               >
                 <span className="lg:hidden" aria-hidden>
@@ -105,7 +114,7 @@ export async function Navbar({ userEmail, active }: { userEmail: string; active:
         className="mobile-tabbar fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
         style={{ viewTransitionName: "site-tabbar" }}
       >
-        <div className="grid grid-cols-4">
+        <div className="grid grid-cols-5">
           {NAV_LINKS.map((link) => {
             const isActive = active === link.key;
             return (
@@ -119,11 +128,16 @@ export async function Navbar({ userEmail, active }: { userEmail: string; active:
               >
                 <span
                   aria-hidden
-                  className={`flex h-7 w-12 items-center justify-center rounded-full text-base transition-colors duration-150 ${
+                  className={`relative flex h-7 w-12 items-center justify-center rounded-full text-base transition-colors duration-150 ${
                     isActive ? "bg-tint-primary" : ""
                   }`}
                 >
                   {link.icon}
+                  {link.key === "mistakes" && dueMistakes > 0 && (
+                    <span className="absolute top-[-2px] right-0 rounded-full bg-accent px-1.5 text-[10px] leading-4 font-semibold text-neutral-900 tabular-nums">
+                      {dueLabel}
+                    </span>
+                  )}
                 </span>
                 {link.label}
               </Link>
