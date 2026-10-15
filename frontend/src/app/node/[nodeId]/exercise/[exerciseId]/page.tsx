@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { exerciseHref, fetchDueMistakes, mistakesHref, parseScope } from "@/lib/mistakesQueue";
 import {
+  EXERCISE_TYPE_LABEL,
   GATING_EXERCISE_TYPES,
   type CodeContent,
   type Exercise,
@@ -16,6 +17,7 @@ import { MatchExercise } from "@/components/MatchExercise";
 import { ParsonsExercise } from "@/components/ParsonsExercise";
 import { Navbar } from "@/components/Navbar";
 import { PageTransition } from "@/components/PageTransition";
+import { PrevNextCompact, type NavTarget } from "@/components/PrevNextNav";
 
 export default async function ExercisePage({
   params,
@@ -55,6 +57,12 @@ export default async function ExercisePage({
 
   let nextHref: string | null;
   let doneHref: string | undefined;
+  // Prev/Next buttons: plain reading order (the node's exercises, or the
+  // due queue in a review run) — separate from nextHref above, which is
+  // where "solved, what now?" goes.
+  let prevTarget: NavTarget | null = null;
+  let nextTarget: NavTarget | null = null;
+  let counter: string | undefined;
 
   if (reviewScope) {
     // The queue is the due mistakes in this scope, in tree order. Next is
@@ -66,6 +74,16 @@ export default async function ExercisePage({
     const next = (index >= 0 ? queue[index + 1] : undefined) ?? queue.find((item) => item.exerciseId !== exerciseId);
     nextHref = next ? exerciseHref(next, reviewScope) : null;
     doneHref = mistakesHref(reviewScope);
+
+    if (index >= 0) {
+      const target = (item: (typeof queue)[number] | undefined): NavTarget | null =>
+        item
+          ? { href: exerciseHref(item, reviewScope), label: `${EXERCISE_TYPE_LABEL[item.type]} · ${item.nodeTitle}` }
+          : null;
+      prevTarget = target(queue[index - 1]);
+      nextTarget = target(queue[index + 1]);
+      counter = `${index + 1} / ${queue.length}`;
+    }
   } else {
     // Where "Next exercise" goes once this one is solved: the next
     // exercise in this node the user hasn't passed yet, wrapping back to the
@@ -90,6 +108,16 @@ export default async function ExercisePage({
     const nextExercise =
       pending.find((e) => e.position > typedExercise.position) ?? pending[0] ?? null;
     nextHref = nextExercise ? `/node/${nodeId}/exercise/${nextExercise.id}` : null;
+
+    const all = siblings ?? [];
+    const index = all.findIndex((e) => e.id === exerciseId);
+    const target = (e: { id: string; position: number } | undefined): NavTarget | null =>
+      e ? { href: `/node/${nodeId}/exercise/${e.id}`, label: `Exercise ${e.position}` } : null;
+    if (index >= 0) {
+      prevTarget = target(all[index - 1]);
+      nextTarget = target(all[index + 1]);
+      counter = `${index + 1} / ${all.length}`;
+    }
   }
 
   return (
@@ -97,12 +125,15 @@ export default async function ExercisePage({
       <Navbar userEmail={user.email ?? ""} active="tree" />
       <PageTransition>
       <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6 py-10">
-        <Link
-          href={reviewScope ? mistakesHref(reviewScope) : `/node/${nodeId}`}
-          className="text-sm text-primary underline transition-opacity hover:opacity-75"
-        >
-          {reviewScope ? "← Back to mistakes" : "← Back to exercises"}
-        </Link>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Link
+            href={reviewScope ? mistakesHref(reviewScope) : `/node/${nodeId}`}
+            className="text-sm text-primary underline transition-opacity hover:opacity-75"
+          >
+            {reviewScope ? "← Back to mistakes" : "← Back to exercises"}
+          </Link>
+          {counter && <PrevNextCompact prev={prevTarget} next={nextTarget} counter={counter} />}
+        </div>
 
         {/* fix_bug reuses CodeExercise as-is: same content shape (starter_code
             just happens to be broken instead of a stub), same editor + test

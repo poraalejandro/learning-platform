@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/Navbar";
 import { PageTransition } from "@/components/PageTransition";
 import { LessonContent } from "@/components/LessonContent";
+import { PrevNextCards } from "@/components/PrevNextNav";
+import { fetchLessonOrder } from "@/lib/lessons";
 
 export default async function LessonPage({ params }: { params: Promise<{ lessonId: string }> }) {
   const { lessonId } = await params;
@@ -21,11 +23,16 @@ export default async function LessonPage({ params }: { params: Promise<{ lessonI
 
   if (!lesson) notFound();
 
-  const { data: node } = await supabase
-    .from("skill_nodes")
-    .select("id, title")
-    .eq("id", lesson.node_id)
-    .single();
+  const [{ data: node }, order] = await Promise.all([
+    supabase.from("skill_nodes").select("id, title").eq("id", lesson.node_id).single(),
+    fetchLessonOrder(supabase),
+  ]);
+
+  const index = order.findIndex((l) => l.id === lessonId);
+  const toTarget = (stop?: { id: string; title: string }) =>
+    stop ? { href: `/lessons/${stop.id}`, label: stop.title } : null;
+  const prev = index > 0 ? toTarget(order[index - 1]) : null;
+  const next = index >= 0 ? toTarget(order[index + 1]) : null;
 
   return (
     <>
@@ -48,6 +55,8 @@ export default async function LessonPage({ params }: { params: Promise<{ lessonI
         </div>
 
         <LessonContent markdown={lesson.content_md} />
+
+        <PrevNextCards prev={prev} next={next} />
       </main>
       </PageTransition>
     </>
