@@ -13,6 +13,7 @@ type PyProxy = { destroy: () => void };
 type PyodideInterface = {
   runPythonAsync: (code: string, options?: { globals: PyProxy }) => Promise<unknown>;
   toPy: (value: unknown) => PyProxy;
+  loadPackage: (names: string[]) => Promise<unknown>;
 };
 
 declare global {
@@ -80,6 +81,77 @@ export function getPyodide(): Promise<PyodideInterface> {
   return pyodidePromise;
 }
 
+// Libraries that ship with Pyodide but aren't loaded at startup: the bare
+// runtime is ~10 MB, and NumPy/pandas add several more each, so they're
+// fetched only when an exercise actually imports them (then cached by the
+// browser and kept loaded for the rest of the session). Keys are the import
+// names; values are what the loading banner calls them.
+const ON_DEMAND_PACKAGES: Record<string, string> = { numpy: "NumPy", pandas: "pandas" };
+const IMPORT_PATTERN = /^\s*(?:import|from)\s+([A-Za-z_]\w*)/gm;
+
+const packagePromises = new Map<string, Promise<unknown>>();
+
+/** "" when idle, otherwise the display names being downloaded ("NumPy, pandas"). Shaped for useSyncExternalStore. */
+let packagesLoading = "";
+const packageListeners = new Set<() => void>();
+const pendingPackages = new Set<string>();
+
+function refreshPackagesLoading() {
+  packagesLoading = [...pendingPackages].map((name) => ON_DEMAND_PACKAGES[name]).join(", ");
+  packageListeners.forEach((listener) => listener());
+}
+
+export function getPackagesLoading(): string {
+  return packagesLoading;
+}
+
+export function subscribePackages(listener: () => void): () => void {
+  packageListeners.add(listener);
+  return () => packageListeners.delete(listener);
+}
+
+/** Import names in `code` that need an on-demand package. */
+function packagesImportedBy(code: string): string[] {
+  const found = new Set<string>();
+  for (const match of code.matchAll(IMPORT_PATTERN)) {
+    if (match[1] in ON_DEMAND_PACKAGES) found.add(match[1]);
+  }
+  return [...found];
+}
+
+/**
+ * Makes sure every on-demand library `code` imports is loaded. Safe to call
+ * repeatedly and concurrently (each package is fetched once); a failed
+ * download is forgotten so the next call retries.
+ */
+export async function ensurePackagesFor(code: string): Promise<void> {
+  const names = packagesImportedBy(code);
+  if (names.length === 0) return;
+  const pyodide = await getPyodide();
+
+  await Promise.all(
+    names.map((name) => {
+      let promise = packagePromises.get(name);
+      if (!promise) {
+        pendingPackages.add(name);
+        refreshPackagesLoading();
+        promise = pyodide
+          .loadPackage([name])
+          .catch((error) => {
+            packagePromises.delete(name);
+            throw error;
+          })
+          .finally(() => {
+            pendingPackages.delete(name);
+            refreshPackagesLoading();
+          });
+        packagePromises.set(name, promise);
+      }
+      return promise;
+    }),
+  );
+}
+
 export type TestCase = { call: string; expected: string };
 export type TestResult = { call: string; expected: string; actual: string; passed: boolean; error?: string };
 
@@ -123,6 +195,8 @@ async def __run_call(__source):
  */
 export async function runTests(userCode: string, tests: TestCase[]): Promise<TestResult[]> {
   const pyodide = await getPyodide();
+  // Test calls can import too (e.g. "import numpy as np; f(np.array(...))").
+  await ensurePackagesFor([userCode, ...tests.map((test) => test.call)].join("\n"));
   const namespace = pyodide.toPy({});
 
   try {

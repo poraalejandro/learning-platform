@@ -47,15 +47,20 @@ export default async function Home() {
 
   const statuses = computeNodeStatuses(allNodes, prerequisites ?? [], treeProgress);
 
+  // A side quest sits on the row of the main-quest node that unlocks it.
+  // It can also require other side quests (pandas needs NumPy too); those
+  // show up in the "Requires" tooltip but never decide its row — a side
+  // quest has no row of its own to borrow, so it would land at the top.
   const sideUnlockTitles = new Map<string, string>();
   const sideParentId = new Map<string, string>();
+  const sideRequires = new Map<string, string[]>();
   for (const { node_id, requires_node_id } of prerequisites ?? []) {
-    const sideNode = nodesById.get(node_id);
-    if (sideNode?.track === "side") {
-      sideUnlockTitles.set(node_id, nodesById.get(requires_node_id)?.title ?? requires_node_id);
-      sideParentId.set(node_id, requires_node_id);
-    }
+    if (nodesById.get(node_id)?.track !== "side") continue;
+    const required = nodesById.get(requires_node_id);
+    sideRequires.set(node_id, [...(sideRequires.get(node_id) ?? []), required?.title ?? requires_node_id]);
+    if (required?.track === "main") sideParentId.set(node_id, requires_node_id);
   }
+  for (const [nodeId, titles] of sideRequires) sideUnlockTitles.set(nodeId, titles.join(" + "));
 
   const completedCount = [...statuses.values()].filter((s) => s === "completed").length;
 

@@ -353,7 +353,7 @@ export function SkillTreeGraph({
           position={position}
           status={statuses.get(position.node.id) ?? "locked"}
           progress={nodeProgress.get(position.node.id)}
-          title={sideUnlockTitles.get(position.node.id) ? `Requiere: ${sideUnlockTitles.get(position.node.id)}` : undefined}
+          title={sideUnlockTitles.get(position.node.id) ? `Requires: ${sideUnlockTitles.get(position.node.id)}` : undefined}
           width={SIDE_CARD_WIDTH}
         />
       ))}

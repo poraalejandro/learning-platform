@@ -8,9 +8,10 @@ export const SECTION_LABELS: Record<string, string> = {
   genai: "Generative AI",
   project: "Project",
   engineering: "Software engineering",
+  data: "Data libraries",
 };
 
-export const SECTION_ORDER = ["python", "genai", "project", "engineering"];
+export const SECTION_ORDER = ["python", "genai", "project", "engineering", "data"];
 
 export function sectionLabel(key: string): string {
   return SECTION_LABELS[key] ?? key;

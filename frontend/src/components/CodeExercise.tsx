@@ -5,7 +5,16 @@ import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
 import { keymap } from "@codemirror/view";
 import { Prec } from "@codemirror/state";
-import { getPyodide, getRuntimeStatus, runTests, subscribeRuntime, type TestResult } from "@/lib/pyodide";
+import {
+  ensurePackagesFor,
+  getPackagesLoading,
+  getPyodide,
+  getRuntimeStatus,
+  runTests,
+  subscribePackages,
+  subscribeRuntime,
+  type TestResult,
+} from "@/lib/pyodide";
 import { recordAttempt } from "@/lib/progress";
 import { flagIfStruggling } from "@/lib/mistakes";
 import { handleGatingPass } from "@/lib/game";
@@ -76,11 +85,17 @@ export function CodeExercise({
   // it's usually done before the student finishes reading the prompt — and
   // the status below says what's happening if it isn't.
   const runtime = useSyncExternalStore(subscribeRuntime, getRuntimeStatus, () => "idle" as const);
+  // Same idea for NumPy/pandas: an exercise whose starter code or tests
+  // import one starts downloading it right away too.
+  const packagesLoading = useSyncExternalStore(subscribePackages, getPackagesLoading, () => "");
+  const preloadSource = [content.starter_code, ...content.tests.map((test) => test.call)].join("\n");
   useEffect(() => {
-    getPyodide().catch(() => {
-      // surfaced through the runtime status; Run retries the load
-    });
-  }, []);
+    getPyodide()
+      .then(() => ensurePackagesFor(preloadSource))
+      .catch(() => {
+        // surfaced through the runtime status; Run retries the load
+      });
+  }, [preloadSource]);
 
   async function handleRun(origin?: Point) {
     if (running) return;
@@ -164,20 +179,23 @@ export function CodeExercise({
   }
 
   const runtimeLoading = runtime === "loading";
+  const loadingAnything = runtimeLoading || packagesLoading !== "";
   const flashDelay = (results?.length ?? 0) * RESULT_STAGGER_MS;
 
   return (
     <div className="flex flex-col gap-4">
       <p className="whitespace-pre-wrap">{content.prompt}</p>
 
-      {(runtimeLoading || runtime === "error") && (
+      {(loadingAnything || runtime === "error") && (
         <div className="animate-rise-in flex flex-col gap-1.5 rounded-lg border bg-surface-2 px-3 py-2 text-xs text-muted">
           <span>
             {runtimeLoading
               ? "Loading the Python runtime — only the first time on this device (~10 MB)…"
-              : "Couldn't load the Python runtime. Check your connection; Run will try again."}
+              : packagesLoading
+                ? `Loading ${packagesLoading} — only the first time on this device…`
+                : "Couldn't load the Python runtime. Check your connection; Run will try again."}
           </span>
-          {runtimeLoading && (
+          {loadingAnything && (
             <span className="block h-1 overflow-hidden rounded-full bg-border">
               <span className="animate-indeterminate block h-full w-2/5 rounded-full bg-primary" />
             </span>
@@ -210,10 +228,10 @@ export function CodeExercise({
         <button
           ref={runButtonRef}
           onClick={(e) => handleRun(pointFromClick(e))}
-          disabled={running || runtimeLoading}
+          disabled={running || loadingAnything}
           className="rounded-lg bg-primary px-3 py-2 text-sm text-white transition-all duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
         >
-          {runtimeLoading ? "Loading Python…" : running ? "Running..." : "▶ Run"}
+          {runtimeLoading ? "Loading Python…" : packagesLoading ? `Loading ${packagesLoading}…` : running ? "Running..." : "▶ Run"}
         </button>
         {!showSolution && (
           <button
