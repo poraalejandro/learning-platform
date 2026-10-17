@@ -152,6 +152,27 @@ export async function ensurePackagesFor(code: string): Promise<void> {
   );
 }
 
+/**
+ * Pyodide's error message is the full traceback, including frames inside
+ * Pyodide itself (/lib/python3.x/_pyodide/...) that mean nothing to a
+ * student. Keep only what starts at their own code — "<exec>" is the
+ * student's code, "<call>" a test call — or just the final "XError: …"
+ * line when there's no such frame.
+ */
+function formatPythonError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  const lines = message.trimEnd().split("\n");
+  const start = lines.findIndex((line) => line.includes('File "<exec>"') || line.includes('File "<call>"'));
+  if (start < 0) return lines.slice(-1).join("\n");
+  const kept = lines.slice(start);
+  // A failing test call also passes through our own __run_call wrapper
+  // (and the one-line "<module>" that invokes it); those frames are ours.
+  if (!kept.some((line) => line.includes("in __run_call"))) return kept.join("\n");
+  return kept
+    .filter((line) => !/^\s*File ".*", line \d+, in (<module>|__run_call|__wrapped)$/.test(line))
+    .join("\n");
+}
+
 export type TestCase = { call: string; expected: string };
 export type TestResult = { call: string; expected: string; actual: string; passed: boolean; error?: string };
 
@@ -200,7 +221,14 @@ export async function runTests(userCode: string, tests: TestCase[]): Promise<Tes
   const namespace = pyodide.toPy({});
 
   try {
-    await pyodide.runPythonAsync(userCode + "\n" + RUN_CALL_HELPER, { globals: namespace });
+    try {
+      await pyodide.runPythonAsync(userCode + "\n" + RUN_CALL_HELPER, { globals: namespace });
+    } catch (error) {
+      // The student's code itself didn't load (SyntaxError, IndentationError,
+      // a NameError at module level…). That's a normal failed run, not a
+      // runtime failure: report it as one result so they can read and fix it.
+      return [{ call: "", expected: "", actual: "", passed: false, error: formatPythonError(error) }];
+    }
 
     const results: TestResult[] = [];
     for (const test of tests) {
@@ -215,7 +243,7 @@ export async function runTests(userCode: string, tests: TestCase[]): Promise<Tes
           ...test,
           actual: "",
           passed: false,
-          error: error instanceof Error ? error.message : String(error),
+          error: formatPythonError(error),
         });
       }
     }

@@ -19,7 +19,7 @@ import { recordAttempt } from "@/lib/progress";
 import { flagIfStruggling } from "@/lib/mistakes";
 import { handleGatingPass } from "@/lib/game";
 import { requestHint, TutorError } from "@/lib/tutor";
-import { centerOf, pointFromClick, type Point } from "@/lib/fx";
+import { centerOf, pointFromClick, toast, type Point } from "@/lib/fx";
 import { getEffectiveTheme, subscribeTheme } from "@/lib/theme";
 import { XP_HINT_COST } from "@/lib/xp";
 import type { CodeContent } from "@/lib/exercises";
@@ -102,34 +102,51 @@ export function CodeExercise({
     setRunning(true);
     setResults(null);
     try {
-      const testResults = await runTests(code, content.tests);
+      // Only a failure to load Python lands in this catch: errors in the
+      // student's own code come back from runTests as failed results.
+      let testResults: TestResult[];
+      try {
+        testResults = await runTests(code, content.tests);
+      } catch {
+        setResults([
+          {
+            call: "",
+            expected: "",
+            actual: "",
+            passed: false,
+            error: "Couldn't start the Python runtime — check your connection and try again.",
+          },
+        ]);
+        return;
+      }
       setResults(testResults);
 
       const allPassed = testResults.every((r) => r.passed);
       setPassed(allPassed);
-      if (allPassed) {
-        setFlashKey((k) => k + 1);
-        await handleGatingPass({
-          exerciseId,
-          nodeId,
-          hintsUsed: hintLevel,
-          submittedCode: code,
-          origin: origin ?? centerOf(runButtonRef.current),
+      if (allPassed) setFlashKey((k) => k + 1);
+
+      // Saving is separate from running: if the database is unreachable the
+      // tests still show as passed, and we say the save is what failed.
+      try {
+        if (allPassed) {
+          await handleGatingPass({
+            exerciseId,
+            nodeId,
+            hintsUsed: hintLevel,
+            submittedCode: code,
+            origin: origin ?? centerOf(runButtonRef.current),
+          });
+        } else {
+          await recordAttempt({ exerciseId, status: "failed", submittedCode: code, hintsUsed: hintLevel });
+          await flagIfStruggling(exerciseId, "failed");
+        }
+      } catch {
+        toast({
+          icon: "⚠️",
+          title: "Couldn't save your progress",
+          body: "Your code ran fine, but the server didn't respond. Check your connection and run it again.",
         });
-      } else {
-        await recordAttempt({ exerciseId, status: "failed", submittedCode: code, hintsUsed: hintLevel });
-        await flagIfStruggling(exerciseId, "failed");
       }
-    } catch {
-      setResults([
-        {
-          call: "",
-          expected: "",
-          actual: "",
-          passed: false,
-          error: "Couldn't start the Python runtime — check your connection and try again.",
-        },
-      ]);
     } finally {
       setRunning(false);
     }
@@ -262,7 +279,7 @@ export function CodeExercise({
           {results.map((result, i) => (
             <li
               key={i}
-              className={`animate-rise-in ${result.passed ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+              className={`animate-rise-in whitespace-pre-wrap ${result.passed ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
               style={{ animationDelay: `${i * RESULT_STAGGER_MS}ms` }}
             >
               <span className="inline-block animate-pop-in" style={{ animationDelay: `${i * RESULT_STAGGER_MS + 60}ms` }}>
