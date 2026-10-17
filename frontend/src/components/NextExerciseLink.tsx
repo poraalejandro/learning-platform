@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Icon } from "@/components/Icon";
 
 /**
  * Shown by every non-flashcard exercise once it's solved. Flashcards
@@ -23,7 +24,7 @@ export function NextExerciseLink({
         href={doneHref}
         className="animate-pop-in self-start rounded-lg border border-success/50 bg-tint-success px-4 py-2.5 text-sm font-medium transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-95"
       >
-        🎉 Review finished — back to your mistakes
+        <Icon name="sparkles" size={16} className="inline align-[-3px] mr-1.5 text-accent" />Review finished — back to your mistakes
       </Link>
     );
   }
@@ -34,7 +35,7 @@ export function NextExerciseLink({
         href={`/node/${nodeId}`}
         className="animate-pop-in self-start rounded-lg border border-success/50 bg-tint-success px-4 py-2.5 text-sm font-medium transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-95"
       >
-        🎉 Nothing left to do in this node — go back
+        <Icon name="sparkles" size={16} className="inline align-[-3px] mr-1.5 text-accent" />Nothing left to do in this node — go back
       </Link>
     );
   }
@@ -42,9 +43,9 @@ export function NextExerciseLink({
   return (
     <Link
       href={nextHref}
-      className="animate-pop-in self-start rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:scale-95"
+      className="animate-pop-in self-start rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-on-primary shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:scale-95"
     >
-      Next exercise →
+      Next exercise <Icon name="arrowRight" size={16} strokeWidth={2.4} className="inline align-[-3px] ml-1" />
     </Link>
   );
 }

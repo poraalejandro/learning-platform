@@ -10,6 +10,7 @@ import { PYTHON_GLOSSARY, PYTHON_GLOSSARY_HOME } from "@/lib/pythonGlossary";
 import { Navbar } from "@/components/Navbar";
 import { PageTransition } from "@/components/PageTransition";
 import { SEARCH_INPUT_ID } from "@/lib/keys";
+import { Icon } from "@/components/Icon";
 
 function Highlight({ text, query }: { text: string; query: string }) {
   return (
@@ -152,9 +153,9 @@ export default async function SearchPage({
             />
             <button
               type="submit"
-              className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:brightness-110 active:scale-95"
+              className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-on-primary shadow-sm transition-all duration-150 hover:brightness-110 active:scale-95"
             >
-              🔍 <span className="hidden sm:inline">Search</span>
+              <Icon name="search" size={16} /> <span className="hidden sm:inline">Search</span>
             </button>
           </form>
           <p className="hidden text-xs text-muted pointer-fine:block">
@@ -301,7 +302,7 @@ export default async function SearchPage({
                     >
                       <span className="min-w-0">
                         <span className="font-medium">
-                          📖 <Highlight text={lesson.title} query={query} />
+                          <Icon name="book" size={15} className="inline align-[-3px] mr-1 text-accent" /><Highlight text={lesson.title} query={query} />
                         </span>
                         {snippet && (
                           <span className="mt-1 block text-sm text-muted">

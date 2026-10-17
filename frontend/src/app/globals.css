@@ -23,25 +23,29 @@
 
 :root {
   color-scheme: light dark;
-  /* Surfaces are layered rather than flat: the page is a hair off-white,
-     cards sit *brighter* than it. In dark mode that inverts — elevation
-     reads as lighter, not as a heavier shadow. */
-  --background: #fbfbfd;
+  /* "Arcade night" palette (see the PyQuest redesign canvas): a deep ink
+     ground, a bright blue for action and a warm gold for achievement —
+     Python's own blue/yellow pairing, pushed toward a game. This block is
+     the light version of it; the dark one below is the reference.
+     Surfaces are layered: cards sit brighter than the page. In dark mode
+     that inverts — elevation reads as lighter, not as a heavier shadow. */
+  --background: #f5f7fc;
   --surface: #ffffff;
-  --surface-2: #f3f4f7;
-  --foreground: #16181d;
-  --muted: #6b7280;
-  --border: #e5e7eb;
+  --surface-2: #edf0f7;
+  --foreground: #141a2e;
+  --muted: #5b6482;
+  --border: #dde2ee;
 
-  /* Python's brand blue/yellow (#306998/#4B8BBE, #FFD43B/#FFE873),
-     desaturated and rebalanced for UI use — the originals are logo
-     colors, too saturated for body text or large surfaces. */
-  --primary: #3f6f95;
-  --primary-light: #e8f0f7;
-  --accent: #c4922f;
-  --accent-light: #faf2e0;
-  --success: #22c55e;
-  --success-light: #e7f8ee;
+  --primary: #2f6fe0;
+  --primary-light: #e7effc;
+  /* Text on a primary-coloured button: white on the light theme's darker
+     blue, ink on the dark theme's bright blue (white on it is ~2.6:1). */
+  --on-primary: #ffffff;
+  --accent: #c99418;
+  --accent-light: #fbf1d9;
+  --success: #16a34a;
+  --success-light: #e5f6eb;
+  --dots: color-mix(in srgb, var(--foreground) 6%, transparent);
 
   /* Status tints as *opaque* colours (the status colour mixed into the
      surface) rather than an alpha wash. A translucent card lets whatever
@@ -63,37 +67,39 @@
    to OR a media query with an attribute selector in a single rule. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --background: #0b0c0e;
-    --surface: #141619;
-    --surface-2: #1b1e23;
-    --foreground: #eceef1;
-    --muted: #9aa1ab;
-    --border: #262a30;
+    --background: #0f1324;
+    --surface: #171d33;
+    --surface-2: #1f2742;
+    --foreground: #e8ecf8;
+    --muted: #9aa3c0;
+    --border: #262f4f;
 
-    --primary: #7fb2dd;
-    --primary-light: #16293a;
-    --accent: #e8c569;
-    --accent-light: #302713;
+    --primary: #5b9cff;
+    --primary-light: #16234a;
+    --on-primary: #0b1430;
+    --accent: #f2c14e;
+    --accent-light: #2e2610;
     --success: #4ade80;
-    --success-light: #12251a;
+    --success-light: #11261b;
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --background: #0b0c0e;
-  --surface: #141619;
-  --surface-2: #1b1e23;
-  --foreground: #eceef1;
-  --muted: #9aa1ab;
-  --border: #262a30;
+  --background: #0f1324;
+  --surface: #171d33;
+  --surface-2: #1f2742;
+  --foreground: #e8ecf8;
+  --muted: #9aa3c0;
+  --border: #262f4f;
 
-  --primary: #7fb2dd;
-  --primary-light: #16293a;
-  --accent: #e8c569;
-  --accent-light: #302713;
+  --primary: #5b9cff;
+  --primary-light: #16234a;
+  --on-primary: #0b1430;
+  --accent: #f2c14e;
+  --accent-light: #2e2610;
   --success: #4ade80;
-  --success-light: #12251a;
+  --success-light: #11261b;
 }
 
 :root[data-theme="light"] {
@@ -109,14 +115,16 @@
   --color-border: var(--border);
   --color-primary: var(--primary);
   --color-primary-light: var(--primary-light);
+  --color-on-primary: var(--on-primary);
   --color-accent: var(--accent);
   --color-accent-light: var(--accent-light);
   --color-success: var(--success);
   --color-tint-primary: var(--tint-primary);
   --color-tint-accent: var(--tint-accent);
   --color-tint-success: var(--tint-success);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-dm-sans);
+  --font-mono: var(--font-jetbrains);
+  --font-display: var(--font-bricolage);
 }
 
 @layer base {
@@ -131,18 +139,15 @@
 
   body {
     background-color: var(--background);
-    /* Barely-there brand glow behind the page so it isn't a flat sheet. */
-    background-image: radial-gradient(
-      1100px 520px at 50% -15%,
-      color-mix(in srgb, var(--primary) 9%, transparent),
-      transparent 70%
-    );
+    /* A faint dot grid, so the page reads as a playfield, not a flat sheet. */
+    background-image: radial-gradient(var(--dots) 1px, transparent 1px);
+    background-size: 22px 22px;
     background-attachment: fixed;
     color: var(--foreground);
-    /* layout.tsx loads Geist and exposes it here; the create-next-app
-       template used to override it with Arial, which is why nothing
-       looked like the font that was actually being downloaded. */
-    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    /* layout.tsx loads the three faces and exposes them as variables:
+       DM Sans for body, Bricolage Grotesque for display, JetBrains Mono
+       for code and small technical labels. */
+    font-family: var(--font-dm-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   }
 
   /* Tight tracking on headings is most of what separates a "web page"
@@ -150,12 +155,13 @@
   h1,
   h2,
   h3 {
-    letter-spacing: -0.02em;
+    font-family: var(--font-bricolage), var(--font-dm-sans), sans-serif;
+    letter-spacing: -0.025em;
   }
 
   code,
   pre {
-    font-family: var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
+    font-family: var(--font-jetbrains), ui-monospace, "SFMono-Regular", Menlo, monospace;
   }
 
   /* The phone bottom tab bar is fixed, so the page needs room underneath
@@ -172,6 +178,39 @@
     border-radius: 0.2rem;
     padding: 0 0.1rem;
   }
+}
+
+/* The logo snake flicks its tongue now and then. */
+@keyframes logo-flick {
+  0%,
+  86%,
+  100% {
+    transform: scaleX(0);
+  }
+  89%,
+  96% {
+    transform: scaleX(1);
+  }
+}
+
+.logo-tongue {
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: logo-flick 4s ease-in-out infinite;
+}
+
+/* "Ready to start" nodes breathe a halo so the next step is obvious. */
+@keyframes node-halo {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--foreground) 35%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 14px transparent;
+  }
+}
+
+.animate-node-halo {
+  animation: node-halo 1.9s ease-out infinite;
 }
 
 /* Reusable motion. Everything here is disabled under
@@ -338,21 +377,6 @@
   animation: node-complete 1.2s ease-out 2;
 }
 
-/* Progress rings: pathLength="1" circles, same trick as the connectors.
-   --ring is the filled fraction, set inline per ring. */
-@keyframes ring-fill {
-  from {
-    stroke-dashoffset: var(--ring);
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-.animate-ring-fill {
-  animation: ring-fill 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
-}
-
 /* Indeterminate bar: we can't know Pyodide's real download progress, so
    this says "working" without pretending to know "how far". */
 @keyframes indeterminate {
@@ -449,8 +473,9 @@
   .animate-bump,
   .animate-node-unlock,
   .animate-node-complete,
-  .animate-ring-fill,
-  .animate-success-flash {
+  .animate-success-flash,
+  .animate-node-halo,
+  .logo-tongue {
     animation: none !important;
   }
 

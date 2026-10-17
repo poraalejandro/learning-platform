@@ -5,13 +5,15 @@ import { countDueMistakes } from "@/lib/mistakesQueue";
 import { XpChip } from "@/components/XpChip";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { KeyboardShortcuts } from "@/components/KeyboardShortcuts";
+import { Icon } from "@/components/Icon";
+import { LogoMark } from "@/components/Logo";
 
 const NAV_LINKS = [
-  { href: "/", label: "Tree", icon: "🌳", key: "tree" },
-  { href: "/lessons", label: "Lessons", icon: "📖", key: "lessons" },
-  { href: "/search", label: "Search", icon: "🔍", key: "search" },
-  { href: "/mistakes", label: "Mistakes", icon: "🔁", key: "mistakes" },
-  { href: "/interview", label: "Interview", icon: "🎤", key: "interview" },
+  { href: "/", label: "Tree", icon: "tree", key: "tree" },
+  { href: "/lessons", label: "Lessons", icon: "book", key: "lessons" },
+  { href: "/search", label: "Search", icon: "search", key: "search" },
+  { href: "/mistakes", label: "Mistakes", icon: "repeat", key: "mistakes" },
+  { href: "/interview", label: "Interview", icon: "mic", key: "interview" },
 ] as const;
 
 type NavKey = (typeof NAV_LINKS)[number]["key"];
@@ -48,10 +50,8 @@ export async function Navbar({ userEmail, active }: { userEmail: string; active:
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6 sm:py-3">
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2.5">
-              <span className="text-xl" aria-hidden>
-                🐍
-              </span>
-              <span className="text-base font-semibold">PyQuest</span>
+              <LogoMark size={32} />
+              <span className="font-display text-lg font-extrabold tracking-tight">PyQuest</span>
             </Link>
 
             <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
@@ -62,7 +62,7 @@ export async function Navbar({ userEmail, active }: { userEmail: string; active:
                   aria-current={active === link.key ? "page" : undefined}
                   className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm whitespace-nowrap transition-colors duration-150 lg:px-3 ${
                     active === link.key
-                      ? "bg-tint-primary font-medium text-primary"
+                      ? "bg-surface-2 font-semibold text-foreground"
                       : "text-muted hover:bg-surface-2 hover:text-foreground"
                   }`}
                 >
@@ -99,9 +99,7 @@ export async function Navbar({ userEmail, active }: { userEmail: string; active:
                 title={`Sign out (${userEmail})`}
                 className="flex h-8 items-center justify-center rounded-lg border px-2 text-sm whitespace-nowrap text-muted transition-all duration-150 hover:bg-surface-2 hover:text-foreground active:scale-95 lg:px-3"
               >
-                <span className="lg:hidden" aria-hidden>
-                  🚪
-                </span>
+                <Icon name="logout" size={16} className="lg:hidden" />
                 <span className="hidden lg:inline">Sign out</span>
               </button>
             </form>
@@ -132,7 +130,7 @@ export async function Navbar({ userEmail, active }: { userEmail: string; active:
                     isActive ? "bg-tint-primary" : ""
                   }`}
                 >
-                  {link.icon}
+                  <Icon name={link.icon} size={20} strokeWidth={isActive ? 2.4 : 2} />
                   {link.key === "mistakes" && dueMistakes > 0 && (
                     <span className="absolute top-[-2px] right-0 rounded-full bg-accent px-1.5 text-[10px] leading-4 font-semibold text-neutral-900 tabular-nums">
                       {dueLabel}

@@ -24,6 +24,7 @@ import { getEffectiveTheme, subscribeTheme } from "@/lib/theme";
 import { XP_HINT_COST } from "@/lib/xp";
 import type { CodeContent } from "@/lib/exercises";
 import { NextExerciseLink } from "@/components/NextExerciseLink";
+import { Icon } from "@/components/Icon";
 
 const MAX_HINT_LEVEL = 3;
 const RUNG_LABELS = ["Conceptual", "Strategy", "Almost code"];
@@ -246,16 +247,21 @@ export function CodeExercise({
           ref={runButtonRef}
           onClick={(e) => handleRun(pointFromClick(e))}
           disabled={running || loadingAnything}
-          className="rounded-lg bg-primary px-3 py-2 text-sm text-white transition-all duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
+          className="rounded-lg bg-primary px-3 py-2 text-sm text-on-primary transition-all duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
         >
-          {runtimeLoading ? "Loading Python…" : packagesLoading ? `Loading ${packagesLoading}…` : running ? "Running..." : "▶ Run"}
+          {runtimeLoading ? "Loading Python…" : packagesLoading ? `Loading ${packagesLoading}…` : running ? "Running..." : (
+            <>
+              <Icon name="play" size={14} className="inline align-[-2px] mr-1.5" />
+              Run
+            </>
+          )}
         </button>
         {!showSolution && (
           <button
             onClick={handleRevealSolution}
             className="rounded-lg border px-3 py-2 text-sm transition-all duration-150 hover:bg-surface-2 active:scale-95"
           >
-            🏳 Reveal solution
+            <Icon name="flag" size={14} className="inline align-[-3px] mr-1.5" />Reveal solution
           </button>
         )}
         <span className="ml-auto hidden text-xs text-muted pointer-fine:inline">
@@ -283,7 +289,7 @@ export function CodeExercise({
               style={{ animationDelay: `${i * RESULT_STAGGER_MS}ms` }}
             >
               <span className="inline-block animate-pop-in" style={{ animationDelay: `${i * RESULT_STAGGER_MS + 60}ms` }}>
-                {result.passed ? "✅" : "❌"}
+                <Icon name={result.passed ? "check" : "x"} size={15} strokeWidth={2.6} className="inline align-[-3px]" />
               </span>{" "}
               {result.call && <>{result.call} → </>}
               {result.error ?? result.actual}
@@ -299,7 +305,7 @@ export function CodeExercise({
             className="animate-pop-in font-medium text-green-600 dark:text-green-400"
             style={{ animationDelay: `${flashDelay}ms` }}
           >
-            ✅ Correct! Progress saved.
+            <Icon name="check" size={16} strokeWidth={2.6} className="inline align-[-3px] mr-1.5" />Correct! Progress saved.
           </p>
           <NextExerciseLink nodeId={nodeId} nextHref={nextHref} doneHref={doneHref} />
         </>
@@ -333,7 +339,7 @@ function HintLadder({
 }) {
   return (
     <ol className="flex flex-col gap-1.5 rounded-lg border border-accent/40 bg-accent-light p-3 text-sm" aria-label="Hints">
-      <li className="mb-0.5 text-xs font-semibold tracking-wide text-accent uppercase">💡 Hints</li>
+      <li className="mb-0.5 flex items-center gap-1.5 text-xs font-semibold tracking-wide text-accent uppercase"><Icon name="bulb" size={14} />Hints</li>
       {Array.from({ length: maxLevel }, (_, i) => {
         const unlocked = i < hints.length;
         const isNext = i === hints.length;
@@ -350,7 +356,7 @@ function HintLadder({
                 unlocked ? "animate-pop-in bg-accent text-neutral-900" : "border border-accent/50 text-muted"
               }`}
             >
-              {unlocked ? i + 1 : "🔒"}
+              {unlocked ? i + 1 : <Icon name="lock" size={12} />}
             </span>
             <div className="min-w-0 flex-1">
               <span className="text-xs font-medium text-muted">{RUNG_LABELS[i] ?? `Hint ${i + 1}`}</span>

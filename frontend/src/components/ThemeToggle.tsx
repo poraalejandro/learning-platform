@@ -2,9 +2,10 @@
 
 import { useSyncExternalStore } from "react";
 import { getThemePref, setThemePref, subscribeTheme, type ThemePref } from "@/lib/theme";
+import { Icon, type IconName } from "@/components/Icon";
 
 const NEXT: Record<ThemePref, ThemePref> = { system: "light", light: "dark", dark: "system" };
-const ICON: Record<ThemePref, string> = { system: "🖥️", light: "☀️", dark: "🌙" };
+const ICON: Record<ThemePref, IconName> = { system: "monitor", light: "sun", dark: "moon" };
 const LABEL: Record<ThemePref, string> = {
   system: "Theme: follows your system",
   light: "Theme: light",
@@ -23,8 +24,8 @@ export function ThemeToggle() {
       title={LABEL[pref]}
       className="flex h-8 w-8 items-center justify-center rounded-lg border text-sm transition-all duration-150 hover:bg-surface-2 active:scale-90"
     >
-      <span key={pref} className="animate-pop-in" aria-hidden>
-        {ICON[pref]}
+      <span key={pref} className="animate-pop-in text-muted" aria-hidden>
+        <Icon name={ICON[pref]} size={16} />
       </span>
     </button>
   );

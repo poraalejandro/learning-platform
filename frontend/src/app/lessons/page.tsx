@@ -5,6 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { PageTransition } from "@/components/PageTransition";
 import type { Lesson } from "@/lib/lessons";
 import type { SkillNode } from "@/lib/skillTree";
+import { Icon } from "@/components/Icon";
 
 export default async function LessonsPage() {
   const supabase = await createClient();
@@ -60,7 +61,7 @@ export default async function LessonsPage() {
                     href={`/lessons/${lesson.id}`}
                     className="flex items-center justify-between rounded-xl border bg-surface px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
                   >
-                    <span className="font-medium">📖 {lesson.title}</span>
+                    <span className="flex items-center gap-2 font-medium"><Icon name="book" size={16} className="text-accent" />{lesson.title}</span>
                     <span className="text-muted">→</span>
                   </Link>
                 ))}

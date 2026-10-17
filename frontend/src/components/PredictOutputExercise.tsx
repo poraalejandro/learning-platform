@@ -7,6 +7,7 @@ import { handleGatingPass } from "@/lib/game";
 import { pointFromClick, type Point } from "@/lib/fx";
 import type { PredictOutputContent } from "@/lib/exercises";
 import { NextExerciseLink } from "@/components/NextExerciseLink";
+import { Icon } from "@/components/Icon";
 
 // Compares output the way you'd eyeball a terminal: same lines, ignoring
 // trailing spaces and blank lines at the ends, and Windows line endings.
@@ -92,7 +93,7 @@ export function PredictOutputExercise({
           <button
             onClick={(e) => handleCheck(pointFromClick(e))}
             disabled={!prediction}
-            className="rounded-lg bg-primary px-3 py-2 text-sm text-white transition-all duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
+            className="rounded-lg bg-primary px-3 py-2 text-sm text-on-primary transition-all duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
           >
             Check
           </button>
@@ -103,7 +104,7 @@ export function PredictOutputExercise({
               onClick={handleReveal}
               className="rounded-lg border px-3 py-2 text-sm transition-all duration-150 hover:bg-surface-2 active:scale-95"
             >
-              🏳 Reveal the answer
+              <Icon name="flag" size={14} className="inline align-[-3px] mr-1.5" />Reveal the answer
             </button>
           )}
         </div>
@@ -111,7 +112,7 @@ export function PredictOutputExercise({
 
       {showWrong && !finished && (
         <p className="animate-shake text-red-600 dark:text-red-400">
-          ❌ Not correct. Trace through the code line by line and try again.
+          <Icon name="x" size={16} strokeWidth={2.6} className="inline align-[-3px] mr-1.5" />Not correct. Trace through the code line by line and try again.
         </p>
       )}
 
@@ -121,7 +122,10 @@ export function PredictOutputExercise({
             solved ? "border-success/40 bg-tint-success" : "border-border bg-surface-2"
           }`}
         >
-          <p className="font-medium">{solved ? "✅ Correct!" : "The actual output is:"}</p>
+          <p className="font-medium">
+            {solved && <Icon name="check" size={16} strokeWidth={2.6} className="inline align-[-3px] mr-1.5" />}
+            {solved ? "Correct!" : "The actual output is:"}
+          </p>
           {!solved && <pre className="mt-1 overflow-x-auto font-mono">{content.expected_output}</pre>}
           {content.explanation && <p className="mt-1 text-muted">{content.explanation}</p>}
         </div>

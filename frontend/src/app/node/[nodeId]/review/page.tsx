@@ -8,6 +8,7 @@ import type { SrsCard } from "@/lib/sm2";
 import { FlashcardSession } from "@/components/FlashcardSession";
 import { Navbar } from "@/components/Navbar";
 import { PageTransition } from "@/components/PageTransition";
+import { Icon } from "@/components/Icon";
 
 export default async function ReviewPage({ params }: { params: Promise<{ nodeId: string }> }) {
   const { nodeId } = await params;
@@ -69,7 +70,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ nodeId:
 
         {dueQueue.length === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded-2xl border py-16 text-center">
-            <p className="text-4xl">🎉</p>
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-tint-accent text-accent"><Icon name="sparkles" size={28} /></span>
             <p className="font-medium">Nothing due for review in {node.title} right now.</p>
             <Link href={`/node/${nodeId}`} className="text-sm text-primary underline transition-opacity hover:opacity-75">
               Back to exercises

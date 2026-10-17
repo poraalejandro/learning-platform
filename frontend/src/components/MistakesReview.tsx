@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { EXERCISE_TYPE_LABEL } from "@/lib/exercises";
 import { exerciseHref, mistakesHref, type MistakeItem } from "@/lib/mistakesQueue";
+import { Icon } from "@/components/Icon";
 
 export type SectionCount = { key: string; label: string; count: number };
 
@@ -80,9 +81,9 @@ export function MistakesReview({
 
       {items.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-2xl border py-14 text-center">
-          <p className="text-4xl" aria-hidden>
-            🎉
-          </p>
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-tint-accent text-accent">
+            <Icon name="sparkles" size={28} />
+          </span>
           <p className="font-medium">
             {total === 0 ? "No mistakes to review right now." : "Nothing due in this section."}
           </p>
@@ -101,7 +102,7 @@ export function MistakesReview({
         <>
           <Link
             href={exerciseHref(items[0], scope)}
-            className="self-start rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:scale-95"
+            className="self-start rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-on-primary shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:scale-95"
           >
             Start review · {items.length}
           </Link>

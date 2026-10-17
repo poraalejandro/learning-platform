@@ -13,7 +13,7 @@ const RATING_BUTTONS: { rating: Rating; label: string; key: string; classes: str
   { rating: "again", label: "Again", key: "1", classes: "bg-red-600 hover:bg-red-700" },
   { rating: "hard", label: "Hard", key: "2", classes: "bg-orange-500 hover:bg-orange-600" },
   { rating: "good", label: "Good", key: "3", classes: "bg-green-600 hover:bg-green-700" },
-  { rating: "easy", label: "Easy", key: "4", classes: "bg-primary hover:brightness-110" },
+  { rating: "easy", label: "Easy", key: "4", classes: "bg-blue-600 hover:bg-blue-700" },
 ];
 
 const TYPE_LABEL: Record<string, string> = { flashcard: "Flashcard", recall: "Recall" };
@@ -175,7 +175,7 @@ export function FlashcardCard({
                 const at = pointFromClick(e);
                 if (at) reveal({ kind: "point", at });
               }}
-              className="w-full rounded-xl bg-primary py-3 font-medium text-white transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
+              className="w-full rounded-xl bg-primary py-3 font-medium text-on-primary transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
             >
               Show answer
             </button>

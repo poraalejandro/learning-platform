@@ -6,6 +6,7 @@ import { fetchTreeProgress } from "@/lib/treeProgress";
 import { EXERCISE_TYPE_LABEL, GATING_EXERCISE_TYPES, type Exercise } from "@/lib/exercises";
 import { Navbar } from "@/components/Navbar";
 import { PageTransition } from "@/components/PageTransition";
+import { Icon } from "@/components/Icon";
 
 export default async function NodePage({ params }: { params: Promise<{ nodeId: string }> }) {
   const { nodeId } = await params;
@@ -75,8 +76,12 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
   // before." Due-date filtering still applies once it's been reviewed once.
   function gatingExerciseBadge(exerciseId: string) {
     const card = cardsByExercise.get(exerciseId);
-    if (card && card.due_date <= today) return "🔁 Review";
-    return passedIds.has(exerciseId) ? "✅ Done" : "⬜ Pending";
+    if (card && card.due_date <= today) return <span className="inline-flex items-center gap-1.5 font-medium text-orange-600 dark:text-orange-300"><Icon name="repeat" size={14} />Review</span>;
+    return passedIds.has(exerciseId) ? (
+      <span className="inline-flex items-center gap-1.5 font-medium text-accent"><Icon name="check" size={14} strokeWidth={2.6} />Done</span>
+    ) : (
+      <span className="inline-flex items-center gap-1.5 text-muted"><Icon name="circle" size={14} />Pending</span>
+    );
   }
 
   return (
@@ -100,7 +105,7 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
                 href={`/lessons/${lesson.id}`}
                 className="flex items-center justify-between rounded-xl border border-accent/45 bg-accent/10 px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
               >
-                <span className="font-medium">📖 {lesson.title}</span>
+                <span className="flex items-center gap-2 font-medium"><Icon name="book" size={16} className="text-accent" />{lesson.title}</span>
                 <span className="text-muted">→</span>
               </Link>
             ))}
@@ -113,9 +118,13 @@ export default async function NodePage({ params }: { params: Promise<{ nodeId: s
               href={`/node/${nodeId}/review`}
               className="flex items-center justify-between rounded-xl border border-primary/45 bg-primary/10 px-4 py-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
             >
-              <span className="font-medium">📚 Flashcards & recall</span>
+              <span className="flex items-center gap-2 font-medium"><Icon name="cards" size={16} className="text-primary" />Flashcards & recall</span>
               <span className="text-sm">
-                {dueCount > 0 ? `🔁 ${dueCount} due` : "✅ Up to date"}
+                {dueCount > 0 ? (
+                  <span className="inline-flex items-center gap-1.5 font-medium text-orange-600 dark:text-orange-300"><Icon name="repeat" size={14} />{dueCount} due</span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-muted"><Icon name="check" size={14} />Up to date</span>
+                )}
               </span>
             </Link>
           )}

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { onXp, prefersReducedMotion, type Point } from "@/lib/fx";
 import { levelFor, liveStreak, localDay, XP_PER_LEVEL } from "@/lib/xp";
+import { Icon } from "@/components/Icon";
 
 type Float = { id: number; delta: number; at: Point };
 
@@ -96,16 +97,14 @@ export function XpChip({
         title={`${displayXp} XP total · ${XP_PER_LEVEL - intoLevel} XP to level ${level + 1}`}
       >
         <span
-          className={`flex items-center gap-0.5 font-medium ${shownStreak > 0 ? "text-accent" : "text-muted"}`}
+          className={`flex items-center gap-1 font-semibold ${shownStreak > 0 ? "text-orange-600 dark:text-orange-300" : "text-muted"}`}
           aria-label={`${shownStreak}-day streak`}
         >
-          <span aria-hidden className={shownStreak > 0 ? "" : "grayscale"}>
-            🔥
-          </span>
+          <Icon name="flame" size={14} strokeWidth={2.2} />
           {shownStreak}
         </span>
         <span className="h-3 w-px bg-border" aria-hidden />
-        <span className="font-semibold text-primary">Lv {level}</span>
+        <span className="font-display font-bold text-primary">Lv {level}</span>
         <span className="hidden h-1.5 w-14 overflow-hidden rounded-full bg-surface-2 lg:block" aria-hidden>
           <span
             className="block h-full rounded-full bg-primary transition-[width] duration-700 ease-out"

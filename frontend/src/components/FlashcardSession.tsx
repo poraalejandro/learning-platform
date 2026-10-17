@@ -6,6 +6,7 @@ import { FlashcardCard } from "@/components/FlashcardCard";
 import { celebrate } from "@/lib/confetti";
 import type { Exercise } from "@/lib/exercises";
 import type { SrsCard } from "@/lib/sm2";
+import { Icon } from "@/components/Icon";
 
 export function FlashcardSession({
   nodeId,
@@ -24,7 +25,7 @@ export function FlashcardSession({
   if (done) {
     return (
       <div className="animate-pop-in flex flex-col items-center gap-3 rounded-2xl border py-16 text-center">
-        <p className="text-4xl">✅</p>
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-tint-accent text-accent"><Icon name="check" size={28} strokeWidth={2.6} /></span>
         <p className="font-medium">
           Session complete — {items.length} card{items.length === 1 ? "" : "s"} reviewed.
         </p>
