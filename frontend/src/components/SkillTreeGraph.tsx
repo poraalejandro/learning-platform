@@ -1,62 +1,37 @@
 import Link from "next/link";
 import type { NodeStatus, SkillNode } from "@/lib/skillTree";
 import { sectionLabel } from "@/lib/sections";
-import { ProgressRing } from "@/components/ProgressRing";
+import { NodeMedal, NodeMeta, type NodeProgress } from "@/components/NodeMedal";
 
-export type NodeProgress = { done: number; total: number };
+export type { NodeProgress };
 
 // Faint, distinct per section — these are large background bands, so they
-// have to stay quiet enough not to compete with node status colours.
+// have to stay quiet enough not to compete with the medals.
 // color-mix against transparent (not a flat colour) so a single linear-
 // gradient across the whole tree can fade smoothly between sections *and*
 // fade out to the page background at the very top and bottom, rather than
 // each section being a flat rect with a hard edge.
 const ZONE_GRADIENT_COLOR: Record<string, string> = {
-  python: "color-mix(in srgb, var(--primary) 14%, transparent)",
-  genai: "color-mix(in srgb, var(--accent) 16%, transparent)",
-  project: "color-mix(in srgb, var(--success) 14%, transparent)",
-};
-
-// Opaque tints (status colour mixed into the surface), not alpha washes:
-// the nodes sit on top of the connector lines, so a translucent card let
-// the line show straight through it. The label stays neutral foreground —
-// coloured text on a tinted background measured about 2.5:1 contrast,
-// under the 4.5:1 minimum for body text.
-const STATUS_STYLES: Record<NodeStatus, string> = {
-  locked: "border-border bg-surface-2 text-muted",
-  available: "border-primary/45 bg-tint-primary shadow-sm",
-  in_progress: "border-accent/55 bg-tint-accent shadow-sm",
-  completed: "border-success/50 bg-tint-success shadow-sm",
-};
-
-const STATUS_ICON: Record<NodeStatus, string> = {
-  locked: "\u{1F512}",
-  available: "○",
-  in_progress: "⏳",
-  completed: "✅",
+  python: "color-mix(in srgb, var(--primary) 11%, transparent)",
+  genai: "color-mix(in srgb, var(--accent) 12%, transparent)",
+  project: "color-mix(in srgb, var(--success) 11%, transparent)",
 };
 
 // Layout constants for the winding main-quest path + side-quest branches.
 // x is a percentage (matches the SVG viewBox and the nodes' `left: x%`), y
 // is real pixels (the container's height is computed from these same
-// constants, so SVG and HTML positioning always agree).
-const ROW_HEIGHT = 130;
-const TOP_PAD = 60;
-const BOTTOM_PAD = 60;
+// constants, so SVG and HTML positioning always agree). A node's (x, y) is
+// the centre of its medal; the title and status line hang below it, which
+// is what ROW_HEIGHT and BOTTOM_PAD leave room for.
+const ROW_HEIGHT = 168;
+const TOP_PAD = 72;
+const BOTTOM_PAD = 128;
 const ZIGZAG = 13;
 const SIDE_X = 86;
-const CARD_WIDTH = 152;
-const SIDE_CARD_WIDTH = 116;
-
-// Connectors are anchored to node *centres*, so each end has to be pulled
-// back to the card's edge — otherwise the line is born in the middle of a
-// node and disappears under it. Vertical trim is in px (same unit as y);
-// horizontal trim is in the viewBox's percent-ish x unit, sized for the
-// narrowest width the graph renders at (md:, ~720px of content) so the
-// line never tucks under a card at any width.
-const VERTICAL_TRIM = 32;
-const MAIN_CARD_X_TRIM = 10.5;
-const SIDE_CARD_X_TRIM = 8;
+const MEDAL = 72;
+const SIDE_MEDAL = 52;
+const LABEL_WIDTH = 176;
+const SIDE_LABEL_WIDTH = 124;
 
 export type Position = { node: SkillNode; x: number; y: number };
 export type Zone = { section: string; top: number; bottom: number };
@@ -121,78 +96,124 @@ export function zoneGradient(zones: Zone[], totalHeight: number): string {
   return `linear-gradient(to bottom, ${stops.join(", ")})`;
 }
 
-/** Status line under a node's title: a progress ring + count once there's anything to count. */
-export function NodeProgressLine({ status, progress }: { status: NodeStatus; progress?: NodeProgress }) {
-  if (status === "locked" || !progress || progress.total === 0) {
-    return <span className="text-[11px]">{STATUS_ICON[status]}</span>;
-  }
-  const complete = status === "completed";
-  return (
-    <span className="inline-flex items-center gap-1 text-[11px] tabular-nums">
-      <ProgressRing done={progress.done} total={progress.total} size={14} complete={complete} />
-      {progress.done}/{progress.total}
-      {complete && <span aria-hidden>✅</span>}
-    </span>
-  );
-}
-
 function GraphNode({
   position,
   status,
   progress,
   title,
-  width = CARD_WIDTH,
+  side = false,
 }: {
   position: Position;
   status: NodeStatus;
   progress?: NodeProgress;
   title?: string;
-  width?: number;
+  side?: boolean;
 }) {
+  const medal = side ? SIDE_MEDAL : MEDAL;
+  const locked = status === "locked";
+
   const body = (
     <>
-      <div className="text-center text-xs leading-tight font-medium">{position.node.title}</div>
-      <div className="mt-1 flex justify-center">
-        <NodeProgressLine status={status} progress={progress} />
-      </div>
+      <NodeMedal status={status} progress={progress} size={medal} nodeId={position.node.id} square={side} />
+      <span
+        className={`text-center leading-tight font-semibold ${side ? "text-xs" : "text-sm"} ${
+          locked ? "text-muted" : "text-foreground"
+        }`}
+      >
+        {position.node.title}
+      </span>
+      {side ? (
+        <span className="font-mono text-[10px] leading-none tracking-[0.08em] text-muted uppercase">Side quest</span>
+      ) : (
+        <NodeMeta status={status} progress={progress} />
+      )}
     </>
   );
 
-  // Positioning (left/top + centering translate) lives on this outer,
-  // non-animated wrapper. The hover/active transform lives on the inner
-  // element instead of also living here, because inline `style.transform`
-  // (needed for the percentage-based x) would otherwise fight with
-  // Tailwind's hover:scale/active:scale utilities, which compose onto the
-  // same `transform` property — same node, two independent transforms.
-  const wrapperStyle = { left: `${position.x}%`, top: `${position.y}px`, width };
+  // Anchored on the medal's centre (not the whole card's), so connectors
+  // drawn centre-to-centre disappear under the medals at both ends.
+  // Positioning lives on this outer wrapper; the hover transform lives on
+  // the inner element, because inline `transform` here would fight with
+  // Tailwind's hover utilities on the same property.
+  const wrapperStyle = {
+    left: `${position.x}%`,
+    top: position.y,
+    width: side ? SIDE_LABEL_WIDTH : LABEL_WIDTH,
+    transform: `translate(-50%, -${medal / 2}px)`,
+  };
+  const inner = "flex flex-col items-center gap-2";
 
-  // data-node-id is how TreeCelebration finds this card to play the
-  // unlock/complete animation — on the card itself, so the glow follows
-  // its rounded shape.
-  if (status === "locked") {
+  if (locked) {
     return (
-      <div style={wrapperStyle} className="absolute z-10 -translate-x-1/2 -translate-y-1/2">
-        <div
-          data-node-id={position.node.id}
-          title={title}
-          className={`rounded-xl border px-3 py-2 ${STATUS_STYLES[status]}`}
-        >
-          {body}
-        </div>
+      <div style={wrapperStyle} className="absolute z-10" title={title}>
+        <div className={inner}>{body}</div>
       </div>
     );
   }
 
   return (
-    <div style={wrapperStyle} className="absolute z-10 -translate-x-1/2 -translate-y-1/2">
+    <div style={wrapperStyle} className="absolute z-10">
       <Link
-        data-node-id={position.node.id}
         href={`/node/${position.node.id}`}
-        className={`block rounded-xl border px-3 py-2 transition-all duration-200 ease-out hover:-translate-y-1 hover:scale-105 hover:shadow-lg active:scale-95 active:duration-75 ${STATUS_STYLES[status]}`}
+        title={title}
+        className={`${inner} rounded-2xl transition-transform duration-200 ease-out hover:-translate-y-1 active:scale-95 active:duration-75`}
       >
         {body}
       </Link>
     </div>
+  );
+}
+
+/** How a connector out of a node looks: lit gold once that node is done,
+ * a plain track toward what you're on now, dotted toward what's locked. */
+function edgeStyle(fromStatus: NodeStatus | undefined): "lit" | "track" | "dotted" {
+  if (fromStatus === "completed") return "lit";
+  if (fromStatus === "in_progress" || fromStatus === "available") return "track";
+  return "dotted";
+}
+
+function Edge({ d, fromId, kind }: { d: string; fromId: string; kind: "lit" | "track" | "dotted" }) {
+  if (kind === "lit") {
+    // Glow + solid gold, plus a lit segment looping along it so the path
+    // reads as live rather than as a line that animated once and died.
+    return (
+      <g>
+        <path d={d} fill="none" strokeWidth={12} strokeLinecap="round" className="stroke-accent/20" vectorEffect="non-scaling-stroke" />
+        <path
+          data-edge-from={fromId}
+          d={d}
+          fill="none"
+          pathLength={1}
+          strokeWidth={4}
+          strokeLinecap="round"
+          className="stroke-accent"
+          vectorEffect="non-scaling-stroke"
+        />
+        <path
+          d={d}
+          fill="none"
+          pathLength={1}
+          strokeWidth={4}
+          strokeLinecap="round"
+          className="animate-flow-line stroke-[#fff1c2] dark:stroke-white/70"
+          vectorEffect="non-scaling-stroke"
+        />
+      </g>
+    );
+  }
+  // No pathLength here: with a non-scaling stroke the dash pattern is in
+  // screen pixels, which is what makes these read as evenly spaced dots.
+  return (
+    <path
+      data-edge-from={fromId}
+      d={d}
+      fill="none"
+      strokeWidth={kind === "track" ? 4 : 3}
+      strokeLinecap="round"
+      className="stroke-border"
+      strokeDasharray={kind === "dotted" ? "0.5 9" : undefined}
+      vectorEffect="non-scaling-stroke"
+    />
   );
 }
 
@@ -211,11 +232,7 @@ export function SkillTreeGraph({
   sideUnlockTitles: Map<string, string>;
   sideParentId: Map<string, string>;
 }) {
-  const mainPositions: Position[] = mainNodes.map((node, i) => ({
-    node,
-    x: 50 + (i % 2 === 0 ? -ZIGZAG : ZIGZAG),
-    y: TOP_PAD + i * ROW_HEIGHT,
-  }));
+  const mainPositions = computeMainPositions(mainNodes);
   const mainPosById = new Map(mainPositions.map((p) => [p.node.id, p]));
 
   const sidePositions: (Position & { parent?: Position })[] = sideNodes.map((node) => {
@@ -223,7 +240,7 @@ export function SkillTreeGraph({
     return { node, x: SIDE_X, y: parent?.y ?? TOP_PAD, parent };
   });
 
-  const totalHeight = TOP_PAD + Math.max(0, mainNodes.length - 1) * ROW_HEIGHT + BOTTOM_PAD;
+  const totalHeight = computeTotalHeight(mainNodes.length);
   const zones = computeZones(mainPositions, totalHeight);
 
   return (
@@ -233,14 +250,17 @@ export function SkillTreeGraph({
           included), not just this component's narrower column. Only the
           zone labels stay here, since their position is this component's
           own coordinate math. */}
-      {zones.map((zone) => (
+      {zones.map((zone, i) => (
         <div
           key={`label-${zone.section}`}
           id={`section-${zone.section}`}
-          className="absolute left-2 z-[3] scroll-mt-24 text-xs font-semibold tracking-wide text-muted uppercase"
-          style={{ top: zone.top + 10 }}
+          className="absolute inset-x-0 z-[3] flex scroll-mt-24 items-center gap-3"
+          style={{ top: zone.top + (i === 0 ? 4 : 0) }}
         >
-          {sectionLabel(zone.section)}
+          <span className="font-mono text-[11px] font-medium tracking-[0.16em] text-muted uppercase">
+            {sectionLabel(zone.section)}
+          </span>
+          {i > 0 && <span className="h-px flex-1 border-t border-dashed border-border" />}
         </div>
       ))}
 
@@ -248,94 +268,21 @@ export function SkillTreeGraph({
         viewBox={`0 0 100 ${totalHeight}`}
         preserveAspectRatio="none"
         className="absolute inset-0 z-[2] h-full w-full"
+        aria-hidden
       >
         {mainPositions.slice(0, -1).map((from, i) => {
           const to = mainPositions[i + 1];
-          const walked = statuses.get(from.node.id) === "completed";
-
-          // Pull both ends back to the card edges, following the line's own
-          // direction so the x offset stays proportional to the y trim.
-          const dy = to.y - from.y;
-          const ratio = VERTICAL_TRIM / dy;
-          const startX = from.x + (to.x - from.x) * ratio;
-          const startY = from.y + VERTICAL_TRIM;
-          const endX = to.x - (to.x - from.x) * ratio;
-          const endY = to.y - VERTICAL_TRIM;
-
-          // Cubic that leaves and arrives vertically — reads as a path
-          // between two stops rather than a diagonal rule across the page.
-          const span = endY - startY;
-          const d = `M ${startX} ${startY} C ${startX} ${startY + span * 0.5}, ${endX} ${endY - span * 0.5}, ${endX} ${endY}`;
-
-          // A completed connector is drawn twice: the solid track, plus a
-          // lit segment looping along it so the path reads as live rather
-          // than as a line that animated once on load and then died.
-          return (
-            <g key={`main-${from.node.id}`}>
-              <path
-                data-edge-from={from.node.id}
-                d={d}
-                fill="none"
-                pathLength={1}
-                strokeWidth={2}
-                strokeLinecap="round"
-                className={walked ? "stroke-success/45" : "stroke-border"}
-                strokeDasharray={walked ? undefined : "0.03 0.03"}
-                vectorEffect="non-scaling-stroke"
-              />
-              {walked && (
-                <path
-                  d={d}
-                  fill="none"
-                  pathLength={1}
-                  strokeWidth={3}
-                  strokeLinecap="round"
-                  className="animate-flow-line stroke-success"
-                  vectorEffect="non-scaling-stroke"
-                />
-              )}
-            </g>
-          );
+          // Leaves the medal sideways at its own height, then turns down
+          // into the next medal from above — so it never runs through the
+          // title hanging under either one. Both ends sit under a medal.
+          const d = `M ${from.x} ${from.y} C ${to.x} ${from.y}, ${to.x} ${from.y}, ${to.x} ${to.y}`;
+          return <Edge key={`main-${from.node.id}`} d={d} fromId={from.node.id} kind={edgeStyle(statuses.get(from.node.id))} />;
         })}
         {sidePositions.map(({ node, x, y, parent }) => {
           if (!parent) return null;
-          const walked = statuses.get(parent.node.id) === "completed";
-
-          // Side branches run horizontally at their parent's row, so the
-          // trim is on x here rather than y.
-          const startX = parent.x + MAIN_CARD_X_TRIM;
-          const endX = x - SIDE_CARD_X_TRIM;
-
-          return (
-            <g key={`side-${node.id}`}>
-              <line
-                data-edge-from={parent.node.id}
-                x1={startX}
-                y1={parent.y}
-                x2={endX}
-                y2={y}
-                pathLength={1}
-                strokeWidth={2}
-                strokeLinecap="round"
-                className={walked ? "stroke-success/45" : "stroke-border"}
-                strokeDasharray={walked ? undefined : "0.03 0.03"}
-                vectorEffect="non-scaling-stroke"
-              />
-              {walked && (
-                <line
-                  x1={startX}
-                  y1={parent.y}
-                  x2={endX}
-                  y2={y}
-                  pathLength={1}
-                  strokeWidth={3}
-                  strokeLinecap="round"
-                  className="animate-flow-line stroke-success"
-                  vectorEffect="non-scaling-stroke"
-                />
-              )}
-            </g>
-          );
+          const d = `M ${parent.x} ${parent.y} L ${x} ${y}`;
+          const kind = statuses.get(parent.node.id) === "completed" ? "lit" : "dotted";
+          return <Edge key={`side-${node.id}`} d={d} fromId={parent.node.id} kind={kind} />;
         })}
       </svg>
 
@@ -354,7 +301,7 @@ export function SkillTreeGraph({
           status={statuses.get(position.node.id) ?? "locked"}
           progress={nodeProgress.get(position.node.id)}
           title={sideUnlockTitles.get(position.node.id) ? `Requires: ${sideUnlockTitles.get(position.node.id)}` : undefined}
-          width={SIDE_CARD_WIDTH}
+          side
         />
       ))}
     </div>

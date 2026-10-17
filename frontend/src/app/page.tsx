@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { computeNodeStatuses, type SkillNode } from "@/lib/skillTree";
 import { fetchTreeProgress } from "@/lib/treeProgress";
@@ -7,6 +6,8 @@ import type { NodeProgress } from "@/components/SkillTreeGraph";
 import { TreeCelebration } from "@/components/TreeCelebration";
 import { PageTransition } from "@/components/PageTransition";
 import { Navbar } from "@/components/Navbar";
+import { Landing } from "@/components/Landing";
+import { ContinueCard } from "@/components/ContinueCard";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -15,22 +16,21 @@ export default async function Home() {
   } = await supabase.auth.getUser();
 
   if (!user) {
+    // Live counts, so the landing page never advertises numbers the
+    // content doesn't have. Content tables are public-read.
+    const [nodeCount, exerciseCount, lessonCount] = await Promise.all(
+      (["skill_nodes", "exercises", "lessons"] as const).map((table) =>
+        supabase.from(table).select("id", { count: "exact", head: true }),
+      ),
+    );
     return (
-      <main className="animate-rise-in flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
-        <span className="text-4xl" aria-hidden>
-          🐍
-        </span>
-        <h1 className="text-3xl font-semibold">PyQuest</h1>
-        <p className="max-w-sm text-muted">
-          Learn Python and AI engineering by solving exercises, not reading lessons.
-        </p>
-        <Link
-          href="/login"
-          className="mt-2 rounded-lg bg-primary px-5 py-2.5 font-medium text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:scale-95"
-        >
-          Sign in
-        </Link>
-      </main>
+      <Landing
+        counts={{
+          nodes: nodeCount.count ?? 0,
+          exercises: exerciseCount.count ?? 0,
+          lessons: lessonCount.count ?? 0,
+        }}
+      />
     );
   }
 
@@ -76,6 +76,13 @@ export default async function Home() {
     });
   }
 
+  // Main quest first: the node you're in the middle of, else the next one
+  // ready to start. Side quests only when the main path has nothing open.
+  const ordered = [...mainNodes, ...sideNodes];
+  const continueNode =
+    ordered.find((n) => statuses.get(n.id) === "in_progress") ??
+    ordered.find((n) => statuses.get(n.id) === "available");
+
   return (
     <>
       <Navbar userEmail={user.email ?? ""} active="tree" />
@@ -90,16 +97,23 @@ export default async function Home() {
           this still supplies the padding every child relies on. */}
       <PageTransition>
       <main className="flex flex-col items-center gap-8 px-6 py-10 lg:px-0">
-        <div className="animate-rise-in flex w-full max-w-5xl flex-wrap items-end justify-between gap-3 lg:px-6">
+        <div className="animate-rise-in flex w-full max-w-5xl flex-wrap items-end justify-between gap-6 lg:px-6">
           <div>
-            <h1 className="text-2xl font-semibold">Your path</h1>
-            <p className="mt-1 text-sm text-muted">
-              Complete nodes to unlock the next ones. Side quests open up from their parent node.
+            <h1 className="text-4xl font-extrabold">Your path</h1>
+            <p className="mt-2 max-w-md text-muted">
+              Clear a node to light up the next one. Side quests branch off to the right.
+            </p>
+            <p className="mt-3 font-mono text-xs tracking-[0.08em] text-muted uppercase">
+              {completedCount} / {allNodes.length} nodes completed
             </p>
           </div>
-          <span className="rounded-full border border-primary/30 bg-primary-light px-3 py-1 text-xs font-medium text-primary dark:text-white">
-            {completedCount} / {allNodes.length} completed
-          </span>
+          {continueNode && (
+            <ContinueCard
+              node={continueNode}
+              progress={nodeProgress.get(continueNode.id)}
+              starting={statuses.get(continueNode.id) === "available"}
+            />
+          )}
         </div>
 
         <SkillTree

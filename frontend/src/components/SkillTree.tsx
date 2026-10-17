@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { NodeStatus, SkillNode } from "@/lib/skillTree";
 import { sectionLabel, uniqueSectionsInOrder } from "@/lib/sections";
 import {
-  NodeProgressLine,
   SkillTreeGraph,
   computeMainPositions,
   computeTotalHeight,
@@ -10,62 +9,49 @@ import {
   zoneGradient,
   type NodeProgress,
 } from "@/components/SkillTreeGraph";
+import { NodeMedal, NodeMeta } from "@/components/NodeMedal";
 import { TreeIndex } from "@/components/TreeIndex";
 
-// Same opaque-tint approach as SkillTreeGraph — see the note there.
-const STATUS_STYLES: Record<NodeStatus, string> = {
-  locked: "border-border bg-surface-2 text-muted",
-  available: "border-primary/45 bg-tint-primary",
-  in_progress: "border-accent/55 bg-tint-accent",
-  completed: "border-success/50 bg-tint-success",
-};
-
-const STATUS_LABEL: Record<NodeStatus, string> = {
-  locked: "Locked",
-  available: "Available",
-  in_progress: "In progress",
-  completed: "Completed",
-};
-
+/** The phone/tablet version of a node: the same medal, small, beside its title. */
 function NodeCard({
   node,
   status,
   progress,
   unlockHint,
+  side = false,
 }: {
   node: SkillNode;
   status: NodeStatus;
   progress?: NodeProgress;
   unlockHint?: string;
+  side?: boolean;
 }) {
+  const locked = status === "locked";
   const body = (
     <>
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-medium">{node.title}</span>
-        <span className="flex items-center gap-2 text-xs whitespace-nowrap">
-          <NodeProgressLine status={status} progress={progress} />
-          <span className="text-muted">{STATUS_LABEL[status]}</span>
-        </span>
-      </div>
-      {status === "locked" && unlockHint && (
-        <p className="mt-1 text-xs opacity-80">Requires: {unlockHint}</p>
-      )}
+      <NodeMedal status={status} progress={progress} size={44} nodeId={node.id} square={side} />
+      <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <span className={`font-semibold ${locked ? "text-muted" : ""}`}>{node.title}</span>
+        {locked && unlockHint ? (
+          <span className="text-xs text-muted">Requires: {unlockHint}</span>
+        ) : (
+          <span className="flex">
+            <NodeMeta status={status} progress={progress} />
+          </span>
+        )}
+      </span>
     </>
   );
+  const row = "flex items-center gap-4 rounded-2xl border px-4 py-3";
 
-  if (status === "locked") {
-    return (
-      <div data-node-id={node.id} className={`rounded-xl border px-4 py-3 ${STATUS_STYLES[status]}`}>
-        {body}
-      </div>
-    );
+  if (locked) {
+    return <div className={`${row} border-border/60 bg-surface/50`}>{body}</div>;
   }
 
   return (
     <Link
-      data-node-id={node.id}
       href={`/node/${node.id}`}
-      className={`rounded-xl border px-4 py-3 transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] active:duration-75 ${STATUS_STYLES[status]}`}
+      className={`${row} bg-surface shadow-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] active:duration-75`}
     >
       {body}
     </Link>
@@ -128,7 +114,7 @@ export function SkillTree({
         <div className="flex flex-col gap-6">
           {mainSectionGroups.map((group) => (
             <section key={group.section} className="flex flex-col gap-2">
-              <h2 className="mb-1 text-sm font-semibold tracking-wide text-muted uppercase">
+              <h2 className="mb-1 font-mono text-[11px] font-medium tracking-[0.16em] text-muted uppercase">
                 {sectionLabel(group.section)}
               </h2>
               {group.nodes.map((node) => (
@@ -144,7 +130,7 @@ export function SkillTree({
         </div>
 
         <section className="flex flex-col gap-2">
-          <h2 className="mb-1 text-sm font-semibold tracking-wide text-muted uppercase">
+          <h2 className="mb-1 font-mono text-[11px] font-medium tracking-[0.16em] text-muted uppercase">
             Side quests
           </h2>
           {sideNodes.map((node) => (
@@ -154,6 +140,7 @@ export function SkillTree({
               status={statuses.get(node.id) ?? "locked"}
               progress={nodeProgress.get(node.id)}
               unlockHint={sideUnlockTitles.get(node.id)}
+              side
             />
           ))}
         </section>

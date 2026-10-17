@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
+import { LogoMark } from "@/components/Logo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -45,12 +47,12 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center px-6">
-      <div className="animate-rise-in w-full max-w-sm rounded-2xl border bg-surface p-8 shadow-sm">
+      <div className="animate-rise-in w-full max-w-sm rounded-3xl border bg-surface p-8 shadow-[0_24px_60px_rgb(0_0_0/0.18)]">
         <div className="mb-6 text-center">
-          <span className="text-3xl" aria-hidden>
-            🐍
-          </span>
-          <h1 className="mt-2 text-2xl font-semibold">
+          <Link href="/" className="inline-flex" aria-label="PyQuest home">
+            <LogoMark size={48} />
+          </Link>
+          <h1 className="mt-4 text-3xl font-extrabold">
             {mode === "sign-in" ? "Welcome back" : "Create your account"}
           </h1>
           <p className="mt-1 text-sm text-muted">
@@ -81,13 +83,13 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={pending}
-            className="mt-1 rounded-lg bg-primary px-3 py-2.5 font-medium text-white shadow-sm transition-all duration-150 hover:brightness-110 active:scale-95 disabled:opacity-50"
+            className="mt-2 rounded-xl bg-primary px-3 py-3 font-bold text-on-primary shadow-[0_4px_0_color-mix(in_srgb,var(--primary)_60%,black)] transition-all duration-150 hover:brightness-110 active:translate-y-0.5 active:shadow-none disabled:opacity-50"
           >
             {pending ? "..." : mode === "sign-in" ? "Sign in" : "Create account"}
           </button>
         </form>
 
-        {message && <p className="mt-4 text-center text-sm text-red-600">{message}</p>}
+        {message && <p className="mt-4 text-center text-sm text-red-600 dark:text-red-400">{message}</p>}
 
         <button
           onClick={() => {
