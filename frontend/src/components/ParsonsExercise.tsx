@@ -7,15 +7,8 @@ import { handleGatingPass } from "@/lib/game";
 import { pointFromClick, type Point } from "@/lib/fx";
 import type { ParsonsContent } from "@/lib/exercises";
 import { NextExerciseLink } from "@/components/NextExerciseLink";
-
-function shuffle<T>(items: T[]): T[] {
-  const copy = [...items];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
+import { seededShuffle } from "@/lib/shuffle";
+import { Icon } from "@/components/Icon";
 
 export function ParsonsExercise({
   exerciseId,
@@ -33,7 +26,7 @@ export function ParsonsExercise({
   // Reordered with up/down buttons rather than drag-and-drop: native HTML5
   // drag-and-drop doesn't work on touch screens without an extra library,
   // and this app has to work on mobile.
-  const [lines, setLines] = useState<string[]>(() => shuffle(content.lines));
+  const [lines, setLines] = useState<string[]>(() => seededShuffle(content.lines, exerciseId));
   const [checked, setChecked] = useState<boolean | null>(null);
   const [showSolution, setShowSolution] = useState(false);
 
@@ -100,7 +93,7 @@ export function ParsonsExercise({
       <div className="flex flex-wrap gap-2">
         <button
           onClick={(e) => handleCheck(pointFromClick(e))}
-          className="rounded-lg bg-primary px-3 py-2 text-sm text-white transition-all duration-150 hover:brightness-110 active:scale-95"
+          className="rounded-lg bg-primary px-3 py-2 text-sm text-on-primary transition-all duration-150 hover:brightness-110 active:scale-95"
         >
           Check order
         </button>
@@ -109,7 +102,7 @@ export function ParsonsExercise({
             onClick={handleRevealSolution}
             className="rounded-lg border px-3 py-2 text-sm transition-all duration-150 hover:bg-surface-2 active:scale-95 "
           >
-            🏳 Reveal solution
+            <Icon name="flag" size={14} className="inline align-[-3px] mr-1.5" />Reveal solution
           </button>
         )}
       </div>
@@ -118,7 +111,8 @@ export function ParsonsExercise({
         <p
           className={`animate-pop-in ${checked ? "font-medium text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
         >
-          {checked ? "✅ Correct order! Progress saved." : "❌ Not the right order yet."}
+          <Icon name={checked ? "check" : "x"} size={16} strokeWidth={2.6} className="inline align-[-3px] mr-1.5" />
+        {checked ? "Correct order! Progress saved." : "Not the right order yet."}
         </p>
       )}
 

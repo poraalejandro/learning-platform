@@ -7,15 +7,8 @@ import { handleGatingPass } from "@/lib/game";
 import { pointFromClick, type Point } from "@/lib/fx";
 import type { MatchContent } from "@/lib/exercises";
 import { NextExerciseLink } from "@/components/NextExerciseLink";
-
-function shuffle<T>(items: T[]): T[] {
-  const copy = [...items];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
+import { seededShuffle } from "@/lib/shuffle";
+import { Icon } from "@/components/Icon";
 
 export function MatchExercise({
   exerciseId,
@@ -32,8 +25,8 @@ export function MatchExercise({
 }) {
   // Shuffled once per mount, not on every render — recomputing on each
   // render would re-scramble mid-attempt every time state changes.
-  const terms = useMemo(() => shuffle(content.pairs.map((p) => p.term)), [content.pairs]);
-  const definitions = useMemo(() => shuffle(content.pairs.map((p) => p.definition)), [content.pairs]);
+  const terms = useMemo(() => seededShuffle(content.pairs.map((p) => p.term), `${exerciseId}:terms`), [content.pairs, exerciseId]);
+  const definitions = useMemo(() => seededShuffle(content.pairs.map((p) => p.definition), `${exerciseId}:definitions`), [content.pairs, exerciseId]);
   const definitionByTerm = useMemo(() => new Map(content.pairs.map((p) => [p.term, p.definition])), [content.pairs]);
 
   const [matchedTerms, setMatchedTerms] = useState<Set<string>>(new Set());
@@ -118,7 +111,7 @@ export function MatchExercise({
       {done && (
         <>
           <p className="animate-pop-in font-medium text-green-600 dark:text-green-400">
-            ✅ All matched correctly! Progress saved.
+            <Icon name="check" size={16} strokeWidth={2.6} className="inline align-[-3px] mr-1.5" />All matched correctly! Progress saved.
           </p>
           <NextExerciseLink nodeId={nodeId} nextHref={nextHref} doneHref={doneHref} />
         </>
